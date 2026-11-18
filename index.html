@@ -1241,8 +1241,11 @@ const A = {
   accedi: () => {
     const pin = (UI.pinTmp || '').trim(); if (!pin) return;
     UI.err = ''; UI.phase = 'avvio'; render();
-    run('appAccedi', pin).then(r => { AUTH = { pin, tecnico: '' }; UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); })
-      .catch(e => { UI.phase = 'pin'; UI.err = errMsg(e) === 'CODICE_ERRATO' ? 'Codice sbagliato.' : errMsg(e); render(); });
+    // se il codice è la chiave personale di un tecnico, il nome lo sa già il registro: niente "Chi sei?"
+    run('appChiSono', pin).then(nome => {
+      if (nome) { AUTH = { pin, tecnico: nome, tablet: false }; store.set(K_AUTH, AUTH); return avvia(); }
+      return run('appAccedi', pin).then(r => { AUTH = { pin, tecnico: '', tablet: !!r.tablet }; UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); });
+    }).catch(e => { UI.phase = 'pin'; UI.err = errMsg(e) === 'CODICE_ERRATO' ? 'Codice sbagliato.' : errMsg(e); render(); });
   },
   tecnico: v => { AUTH.tecnico = v; store.set(K_AUTH, AUTH); avvia(); },
   'tecnico-libero': () => { const v = (document.getElementById('nome-tec').value || '').trim(); if (v) A.tecnico(v); },
@@ -1608,7 +1611,14 @@ async function invia() {
 /* ---------- avvio ---------- */
 function avvia() {
   if (!AUTH || !AUTH.pin) { UI.phase = 'pin'; return render(); }
-  if (!AUTH.tecnico) { UI.phase = 'avvio'; render(); return run('appAccedi', AUTH.pin).then(r => { AUTH.tablet = !!r.tablet; store.set(K_AUTH, AUTH); UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); }).catch(e => falli(e)); }
+  if (!AUTH.tecnico) {
+    UI.phase = 'avvio'; render();
+    // con la chiave personale il nome lo sa il registro: "Chi sei?" solo per il tablet di officina
+    return run('appChiSono', AUTH.pin).then(nome => {
+      if (nome && !AUTH.tablet) { AUTH.tecnico = nome; store.set(K_AUTH, AUTH); return avvia(); }
+      return run('appAccedi', AUTH.pin).then(r => { AUTH.tablet = !!r.tablet; store.set(K_AUTH, AUTH); UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); });
+    }).catch(e => falli(e));
+  }
   UI.phase = 'avvio'; render();
   run('appDati', AUTH.pin).then(d => {
     D = d; UI.phase = 'pronto';
