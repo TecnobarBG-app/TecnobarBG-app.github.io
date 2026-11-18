@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fine mese</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fine mese">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icona-ufficio-192.png">
+<link rel="apple-touch-icon" href="icona-ufficio-180.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@500;600&display=swap');
+:root {
+  --bg: #f2f2f3; --card: #ffffff; --text: #1d1f20; --muted: #5d5d60; --line: #d4d4d7;
+  --accent: #416180; --accent-soft: #eef6ff;
+  --rosso: #c0392b; --rosso-soft: #fdecea; --arancio: #d9822b; --arancio-soft: #fff3e3;
+  --verde: #2e7d4f; --verde-soft: #e7f5ec; --blu: #3d6fa8; --blu-soft: #e8f0fa; --grigio: #7a7a7d; --grigio-soft: #eeeeef;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "Barlow", system-ui, sans-serif; font-size: 17px; line-height: 1.45; }
+h1, h2, h3 { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight: 600; margin: 0; line-height: 1.1; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 16px 16px 80px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+header h1 { font-size: 34px; }
+.chi { color: var(--muted); font-size: 15px; }
+.mesebar { display: flex; align-items: center; gap: 8px; margin: 6px 0 16px; }
+.mesebar select { font: inherit; font-size: 22px; font-weight: 700; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); text-transform: capitalize; min-width: 0; flex: 1; max-width: 340px; }
+.btn { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 12px 18px; cursor: pointer; background: var(--accent); color: #fff; min-height: 48px; }
+.btn:hover { filter: brightness(1.08); }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.btn.sec { background: var(--card); color: var(--accent); border: 2px solid var(--accent); }
+.btn.ok { background: var(--verde); }
+.btn.warn { background: var(--arancio); }
+.btn.piccolo { padding: 8px 12px; min-height: 40px; font-size: 15px; }
+.btn.grande { font-size: 20px; padding: 16px 22px; width: 100%; }
+.btn:disabled { opacity: .5; cursor: default; }
+.freccia { width: 48px; padding: 0; font-size: 24px; }
+.link { background: none; border: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; padding: 6px 0; }
+.riassunto { color: var(--muted); margin-bottom: 14px; }
+.banner { border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.banner.rosso { background: var(--arancio-soft); border: 2px solid var(--arancio); }
+.banner.verde { background: var(--verde-soft); border: 2px solid var(--verde); }
+.banner b { font-size: 20px; }
+.card { background: var(--card); border-radius: 12px; border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 12px; border-left: 8px solid var(--grigio); }
+.card.rosso { border-left-color: var(--rosso); } .card.arancio { border-left-color: var(--arancio); }
+.card.verde { border-left-color: var(--verde); } .card.blu { border-left-color: var(--blu); } .card.grigio { border-left-color: var(--grigio); }
+.card h2 { font-size: 25px; }
+.riga { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.num { font-size: 22px; font-weight: 700; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 15px; }
+.pill { display: inline-block; border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 15px; margin: 8px 0 4px; }
+.pill.rosso { background: var(--rosso-soft); color: var(--rosso); } .pill.arancio { background: var(--arancio-soft); color: #9a5410; }
+.pill.verde { background: var(--verde-soft); color: var(--verde); } .pill.blu { background: var(--blu-soft); color: var(--blu); } .pill.grigio { background: var(--grigio-soft); color: var(--muted); }
+.avviso { background: var(--arancio-soft); border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-size: 15px; }
+.azioni { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+.form { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+.form label { display: block; font-weight: 700; margin: 6px 0 4px; }
+input[type=text], input[type=password], input[type=date], textarea, select.campo { font: inherit; font-size: 19px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 8px; width: 100%; background: #fff; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+.euro { display: flex; align-items: center; gap: 8px; } .euro input { max-width: 180px; font-size: 24px; font-weight: 700; } .euro span { font-size: 24px; font-weight: 700; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
+th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; } td.e { text-align: right; white-space: nowrap; }
+tr.prob td { background: var(--rosso-soft); }
+/* procedura guidata */
+.wiztop { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.barra { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
+.barra div { height: 100%; background: var(--verde); }
+.domanda { background: var(--card); border-radius: 14px; border: 1px solid var(--line); padding: 20px; }
+.tipo { font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.domanda h2 { font-size: 30px; margin: 4px 0 12px; }
+.cosa { font-size: 26px; font-weight: 700; background: #fffbe6; border: 1px dashed #d9c27a; border-radius: 8px; padding: 10px 14px; margin: 6px 0 14px; word-break: break-word; }
+.contesto { font-size: 15px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin: 8px 0; }
+.contesto b { color: var(--text); }
+.scelta { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.scelta > .lbl { font-weight: 700; margin-bottom: 8px; font-size: 18px; }
+.sugg { display: block; width: 100%; text-align: left; font-size: 22px; padding: 16px 18px; }
+.sugg small { display: block; font-weight: 400; font-size: 15px; opacity: .9; margin-top: 2px; }
+.ditte { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.ditte .btn { font-size: 22px; padding: 18px; }
+.fine { text-align: center; padding: 30px 20px; }
+.fine .big { font-size: 64px; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); top: 12px; z-index: 50; max-width: 92vw; padding: 12px 18px; border-radius: 10px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.18); display: none; }
+#toast.err { background: var(--rosso); color: #fff; display: block; } #toast.ok { background: var(--verde); color: #fff; display: block; }
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 2px solid var(--line); }
+.tabs button { font: inherit; font-weight: 700; font-size: 18px; background: none; border: 0; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 4px solid transparent; margin-bottom: -2px; }
+.tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+.filtri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+.filtri select { font: inherit; padding: 10px; border: 2px solid var(--line); border-radius: 8px; background: #fff; min-width: 0; }
+.ris { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+.ris:hover { border-color: var(--accent); }
+.ris.ann { opacity: .55; text-decoration: line-through; }
+.campo-v { white-space: pre-wrap; background: #fafafa; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+dl.tutto { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 4px 12px; font-size: 15px; }
+dl.tutto dt { color: var(--muted); } dl.tutto dd { margin: 0; white-space: pre-wrap; word-break: break-word; }
+textarea { min-height: 90px; resize: vertical; }
+@media (max-width: 520px) { .filtri { grid-template-columns: 1fr; } }
+#busy { position: fixed; inset: 0; background: rgba(242,242,243,.6); display: none; align-items: center; justify-content: center; z-index: 40; font-size: 22px; font-weight: 700; }
+#busy.on { display: flex; }
+.piede { color: var(--muted); font-size: 14px; margin-top: 24px; }
+@media (max-width: 520px) { header h1 { font-size: 28px; } .domanda h2 { font-size: 25px; } .cosa { font-size: 22px; } .num { font-size: 19px; } }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="busy">Salvo…</div>
+<div class="wrap" id="app"><p>Carico…</p></div>
+<script>
+/* ===== Fine mese – pagina dell'ufficio (0.1) ===== */
+// qualsiasi errore della pagina finisce scritto a schermo (non resta bloccata su "Carico…")
+window.onerror = (m, src, riga) => { const a = document.getElementById('app'); if (a) a.innerHTML += `<p style="color:#c0392b"><b>Errore della pagina:</b> ${String(m)} (riga ${riga})</p>`; };
+document.getElementById('app').innerHTML = '<p>Collegamento al registro…</p>';
+let K = '';            // chiave personale dell'ufficio (dal link ?u=) + ':' + codice personale
+let CHIAVE = '';       // solo la chiave del link
+const K_COD = () => 'uffcodice_' + CHIAVE.slice(0, 12);
+// Il codice resta ricordato su questo computer al massimo 30 giorni, poi lo richiede.
+const COD_GIORNI = 30;
+const leggiCod = () => {
+  try {
+    const v = localStorage.getItem(K_COD()) || ''; if (!v) return '';
+    let o; try { o = JSON.parse(v); } catch (e) { o = null; }
+    if (!o || typeof o !== 'object' || !o.c) { localStorage.removeItem(K_COD()); return ''; }   // formato vecchio: lo richiede
+    if (Date.now() - (o.t || 0) > COD_GIORNI * 86400000) { localStorage.removeItem(K_COD()); return ''; }
+    return String(o.c);
+  } catch (e) { return ''; }
+};
+const salvaCod = c => { try { if (c) localStorage.setItem(K_COD(), JSON.stringify({ c, t: Date.now() })); else localStorage.removeItem(K_COD()); } catch (e) { /* browser senza memoria: lo richiederà */ } };
+let D = null;          // dati del mese dal server
+let V = { vista: 'mese', aperti: {}, form: null, wiz: null, dividi: {}, busy: false };
+let C = { q: { testo: '', torr: '', tec: '', anno: '' }, ris: null, rap: null, modifica: false, annulla: false, da: 'cerca' };
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const euro = n => (Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const chiaveCod = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const nomeMese = ym => { if (!ym) return ''; const [a, m] = ym.split('-').map(Number); return new Date(a, m - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }); };
+const spostaMese = (ym, d) => { const [a, m] = ym.split('-').map(Number); const x = new Date(a, m - 1 + d, 1); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); };
+const leggiEuro = s => { s = String(s || '').replace(/[€\s]/g, ''); if (s === '') return NaN; if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); return Number(s); };
+const errMsg = e => String((e && e.message) || e || 'Errore').replace(/^Exception:\s*/, '');
+const $ = id => document.getElementById(id);
+
+// La pagina funziona dentro Apps Script (google.script.run) o ospitata su GitHub Pages: lì parla con lo stesso
+// Apps Script tramite l'indirizzo /exec (doPost in App.gs, solo funzioni dell'ufficio e dell'app).
+const API_URL = 'https://script.google.com/macros/s/AKfycbx54WnC-3Ua-yVn9S3rqKctnb1FQk69DPtNPEvDUcwQFdrmjRIGYBXXjqoxPf9ZOFjytQ/exec';
+const DENTRO_GOOGLE = !!(window.google && google.script && google.script.run);
+function run(fn, ...args) {
+  return new Promise((ok, ko) => {
+    if (DENTRO_GOOGLE) { google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...args); return; }
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const tmo = setTimeout(() => ctl && ctl.abort(), 300000);
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args }), signal: ctl ? ctl.signal : undefined, redirect: 'follow' })
+      .then(r => { if (!r.ok) throw new Error('Il registro non risponde (' + r.status + '). Riprova tra poco.'); return r.json(); })
+      .then(j => { clearTimeout(tmo); if (j && j.ok) ok(j.r); else ko(new Error((j && j.e) || 'Errore')); })
+      .catch(e => { clearTimeout(tmo); ko(e && e.name === 'AbortError' ? new Error('Il registro non risponde: riprova.') : (e instanceof TypeError ? new Error('Connessione assente o registro non raggiungibile: riprova.') : e)); });
+  });
+}
+function toast(t, tipo) {
+  const el = $('toast'); el.textContent = t; el.className = tipo || 'ok';
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.className = ''; }, tipo === 'err' ? 7000 : 2500);
+}
+// chiama il server; se va bene i dati tornano aggiornati
+async function salva(fn, args, msg) {
+  if (V.busy) return false;
+  V.busy = true; $('busy').classList.add('on');
+  try {
+    D = await run(fn, K, D.mese, ...args);
+    if (msg) toast(msg, 'ok');
+    return true;
+  } catch (e) { toast(errMsg(e), 'err'); return false; }
+  finally { V.busy = false; $('busy').classList.remove('on'); render(); }
+}
+async function caricaMese(m) {
+  $('busy').textContent = 'Carico…'; $('busy').classList.add('on');
+  const lento = setTimeout(() => { if (!D) $('app').innerHTML = '<p>Il registro ci mette tanto a rispondere… (se dopo un minuto è ancora così, ricarica la pagina)</p>'; }, 25000);
+  try {
+    const r = await run('uffDati', K, m || '');
+    if (!r) throw new Error('Il registro ha risposto, ma senza dati leggibili dalla pagina (esegui provaUfficio nell\'editor e guarda il log).');
+    D = r; V.form = null; V.aperti = {};
+  }
+  catch (e) {
+    const m = errMsg(e);
+    if (m === 'SERVE_CODICE' || m === 'CODICE_ERRATO') { salvaCod(''); D = null; clearTimeout(lento); $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; return vistaCodice(m === 'CODICE_ERRATO'); }
+    toast(m, 'err'); if (!D) $('app').innerHTML = `<div class="card rosso"><h2>Non riesco a leggere il registro</h2><p>${esc(m)}</p><p class="sub">Manda questo messaggio a chi gestisce l'app.</p></div>`;
+  }
+  finally { clearTimeout(lento); $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; render(); }
+}
+
+/* ---------- stato di una proforma: colore + frase ---------- */
+function statoPf(g) {
+  const np = gruppi(g.key).length;
+  const M = D.modi || {};
+  if (g.privati) return np ? { c: 'rosso', t: `${np} da sistemare` } : { c: 'grigio', t: 'Clienti privati: niente proforma' };
+  if (g.modo === M.PORTALE && (g.stato === 'Fatturata' || g.stato === 'Documenti inviati')) {
+    const mancano = [g.conf ? '' : 'caricare sul portale', g.stato === 'Documenti inviati' ? '' : 'mandare la mail'].filter(Boolean);
+    if (!mancano.length) return { c: 'grigio', t: `Caricata sul portale il ${g.conf} · mail inviata il ${g.inv}` };
+    return { c: 'blu', t: `Fatturata (Ft. ${g.ftN} del ${g.fatt}) · da ${mancano.join(' e ')}` };
+  }
+  if (g.stato === 'Documenti inviati') return { c: 'grigio', t: `Fattura e rapportini inviati il ${g.inv}` };
+  if (g.stato === 'Caricata sul portale') return { c: 'grigio', t: `Caricata sul portale il ${g.inv}` };
+  if (g.stato === 'Fatturata' && g.modo === M.MAIL) return { c: 'blu', t: `Fatturata (Ft. ${g.ftN} del ${g.fatt}) · manda fattura e rapportini` };
+  if (g.stato === 'Fatturata') return { c: 'grigio', t: `Fatturata il ${g.fatt}${g.ftN ? ' (Ft. ' + g.ftN + ')' : ''}` };
+  if (g.stato === 'Confermata') return { c: 'verde', t: `Confermata il ${g.conf} · da fatturare` };
+  if (g.stato === 'Da correggere') return { c: 'rosso', t: 'Da correggere' };
+  if (g.stato === 'Inviata') {
+    if (g.giorni != null && g.giorni >= D.sollecito) return { c: 'arancio', t: `Inviata il ${g.inv} · nessuna conferma da ${g.giorni} giorni` };
+    return { c: 'blu', t: `Inviata il ${g.inv} · aspetta conferma` };
+  }
+  if (np) return { c: 'rosso', t: `${np} ${np === 1 ? 'cosa' : 'cose'} da sistemare` };
+  if (g.modo === M.MAIL) return { c: 'verde', t: 'Pronta da fatturare' };
+  if (g.modo === M.PORTALE) return { c: 'verde', t: 'Pronta da fatturare (poi portale + mail)' };
+  return { c: 'verde', t: 'Pronta: manda la proforma' };
+}
+
+/* ---------- raggruppa i problemi: una domanda può sistemare più righe ---------- */
+function gruppi(pf) {
+  const lista = D.problemi.filter(p => !pf || p.pf === pf);
+  const out = [], idx = {};
+  const metti = (key, base, p) => { if (!idx[key]) { idx[key] = Object.assign({ key, occ: [] }, base); out.push(idx[key]); } idx[key].occ.push(p); };
+  lista.forEach(p => {
+    if (p.t === 'codice') metti('c|' + chiaveCod(p.cliente), { t: 'codice', cliente: p.cliente }, p);
+    else if (p.t === 'loc' && !p.altra) metti('l|' + p.loc, { t: 'loc', loc: p.loc, vuota: p.vuota }, p);
+    else if (p.t === 'loc') metti('a|' + p.id, { t: 'altra' }, p);
+    else if (p.t === 'ditta') metti('d|' + p.id, { t: 'ditta', motivo: p.motivo, ammesse: p.ammesse }, p);
+    else if (p.t === 'incasso') metti('i|' + p.id, { t: 'incasso', scritto: p.scritto }, p);
+    else if (p.t === 'prezzo') {
+      const k = 'p|' + (p.k || p.pezzo);
+      if (V.dividi[k]) metti('p1|' + p.id + '|' + p.pos, { t: 'prezzo', nome: p.nome, gruppo: k }, p);
+      else metti(k, { t: 'prezzo', nome: p.nome }, p);
+    }
+  });
+  const ordine = { codice: 1, loc: 2, altra: 3, ditta: 4, incasso: 5, prezzo: 6 };
+  out.forEach(g => {
+    if (g.t === 'prezzo') {
+      const s = g.occ.find(o => o.fonte === 'listino') || g.occ.find(o => o.fonte);
+      if (s) { g.su = Math.round(s.su * 100) / 100; g.fonte = s.fonte; g.info = s.info; }
+    }
+  });
+  return out.sort((a, b) => ordine[a.t] - ordine[b.t]);
+}
+const intervento = id => D.interventi.find(x => x.id === id) || {};
+
+/* ================= VISTA DEL MESE ================= */
+function vistaMese() {
+  const mesi = D.mesi.includes(D.mese) ? D.mesi : [D.mese].concat(D.mesi).sort().reverse();
+  const tot = D.interventi.reduce((a, x) => a + x.tot, 0);
+  const daFare = gruppi(null).length;
+  const pf = D.proforma;
+  let h = schede('mese') + `
+  <div class="mesebar">
+    <button class="btn sec freccia" data-a="mese" data-d="-1" aria-label="Mese prima">‹</button>
+    <select id="selMese" aria-label="Mese">${mesi.map(m => `<option value="${m}" ${m === D.mese ? 'selected' : ''}>${esc(nomeMese(m))}</option>`).join('')}</select>
+    <button class="btn sec freccia" data-a="mese" data-d="1" aria-label="Mese dopo">›</button>
+  </div>
+  <div class="riassunto">${D.interventi.length} ${D.interventi.length === 1 ? 'intervento' : 'interventi'} · ${euro(tot)} · ${pf.filter(g => !g.privati && !g.vuota).length} proforma</div>`;
+  (D.avvisi || []).forEach(a => { h += `<div class="avviso" style="background:var(--rosso-soft);margin-bottom:10px"><b>Attenzione:</b> ${esc(a)}</div>`; });
+  if (!D.interventi.length) return h + `<div class="card"><p>Nessun intervento in questo mese.</p></div>`;
+  if (daFare) h += `<div class="banner rosso"><div><b>${daFare} ${daFare === 1 ? 'cosa' : 'cose'} da sistemare</b><br><span class="sub">Una alla volta: prezzi, codici, località…</span></div>
+    ${D.permessi === 'fatture' ? '<span class="sub">Le correzioni le fanno Stefano o Enrico.</span>' : '<button class="btn warn" data-a="wiz" data-pf="">Inizia a sistemare →</button>'}</div>`;
+  else h += `<div class="banner verde"><div><b>Tutto a posto ✓</b><br><span class="sub">I dati del mese sono completi: le proforma si possono mandare.</span></div></div>`;
+  if (D.bozze && D.bozze.length) {
+    const per = {}; D.bozze.forEach(b => (per[b.tec] = per[b.tec] || []).push(b));
+    h += `<div class="card arancio"><h2>Rapportini non ancora inviati dai tecnici</h2>
+      <p class="sub">Finché non li inviano non entrano nel registro né nelle proforma. Meglio sentirli prima di chiudere.</p>
+      ${Object.keys(per).map(t => `<p style="margin:6px 0"><b>${esc(t)}</b>: ${per[t].map(b => esc(b.cosa) + (b.data ? ' (' + esc(b.data) + ')' : '')).join(', ')}</p>`).join('')}</div>`;
+  }
+  pf.forEach(g => { h += cardPf(g); });
+  h += `<p class="piede">Le mail le prepara la pagina (testo e PDF); si mandano dal proprio programma di posta. I PDF restano anche nella cartella LAVORO › Fine mese.<br>
+  Ogni modifica fatta da qui è scritta nella scheda "Modifiche ufficio" del registro.<br>
+  <button class="link" data-a="esci">Esci da questo computer</button> (al prossimo accesso chiederà di nuovo il codice: usalo sui computer non tuoi)</p>`;
+  return h;
+}
+
+function cardPf(g) {
+  const s = statoPf(g);
+  const nomeG = g.key;
+  const nProb = gruppi(g.key).length;
+  let h = `<div class="card ${s.c}"><div class="riga"><div><h2>${esc(g.torr)}</h2><div class="sub">${g.ditta === 'DA ASSEGNARE' ? '<b style="color:var(--rosso)">Ditta da assegnare</b>' : esc(g.ditta)}${g.torr === D.segafredo ? ' · ' + esc(D.periodoSegafredo) : ''}</div></div>
+    <div style="text-align:right"><div class="num">${euro(g.tot)}</div><div class="sub">${g.num} ${g.num === 1 ? 'intervento' : 'interventi'}</div></div></div>
+    <span class="pill ${s.c}">${esc(s.t)}</span>`;
+  if (g.stato === 'Da correggere' && g.nota) h += `<div class="avviso"><b>Da correggere:</b> ${esc(g.nota)}</div>`;
+  if (s.c === 'arancio') h += `<div class="avviso">Nessuna risposta: conviene mandare un sollecito.</div>`;
+  if (g.cambiata) h += `<div class="avviso"><b>Cambiata dopo l'invio:</b> era ${euro(g.totInv)} con ${g.numInv} interventi, ora ${euro(g.tot)} con ${g.num}. Controlla se va rimandata.</div>`;
+  if (g.vuota) h += `<div class="avviso">Non ci sono più interventi di questa proforma nel mese (forse spostati di mese).</div>`;
+  if (!g.privati && !g.vuota) {
+    h += `<div class="sub" style="margin-top:6px">Imponibile: interventi ${euro(g.impCli)}${g.impOff ? ` · officina ${euro(g.impOff)}` : ''} · <i>${esc(g.modo || '')}</i>${g.mailA || g.modo === (D.modi || {}).PORTALE ? '' : ' · <b style="color:var(--rosso)">manca l\'email nella scheda Torrefazioni</b>'}</div>`;
+    if (g.avvisoImporto) h += `<div class="avviso" style="background:var(--rosso-soft)">${esc(g.avvisoImporto)}</div>`;
+    const link = [];
+    if (g.pdf) link.push(`<a href="${esc(g.pdf)}" target="_blank" rel="noopener">PDF rapportini</a>`);
+    if (g.pdfFt) link.push(`<a href="${esc(g.pdfFt)}" target="_blank" rel="noopener">PDF fattura</a>`);
+    if (link.length) h += `<div class="azioni" style="gap:14px">${link.join('')}</div>`;
+  }
+  // azioni: dipendono da come si chiude il mese con questa torrefazione
+  const az = [];
+  const M = D.modi || {};
+  if (nProb && D.permessi !== 'fatture') az.push(`<button class="btn warn" data-a="wiz" data-pf="${esc(nomeG)}">Sistema (${nProb})</button>`);
+  if (!g.privati && !g.vuota && !nProb) {
+    const azBtn = (a, t, cl) => `<button class="btn ${cl || ''} piccolo" data-a="${a}" data-pf="${esc(nomeG)}">${t}</button>`;
+    if (g.modo === M.PROFORMA) {
+      if (!g.stato || g.stato === 'Da correggere') {
+        az.push(azBtn('mail', g.mailPronta ? 'Prepara di nuovo la mail' : 'Prepara la mail della proforma', g.mailPronta ? 'sec' : ''));
+        az.push(bt('inviata', g.stato === 'Da correggere' ? 'Rimandata corretta' : 'L\'ho inviata', g, 'ok'));
+      }
+      if (g.stato === 'Inviata' || g.stato === 'Da correggere') { if (g.stato === 'Inviata') az.push(bt('confermata', 'Confermata', g, 'ok')); az.push(bt('correggere', 'Da correggere', g, 'sec')); }
+      if (g.stato === 'Confermata') az.push(bt('fatturata', 'Fatturata', g, 'sec'));
+    } else {
+      // email (e portale per Essse): fattura → mail con fattura e rapportini (+ caricamento sul portale)
+      const portale = g.modo === M.PORTALE;
+      if (!g.stato) az.push(bt('fattura', 'Scrivi i dati della fattura', g, ''));
+      if (g.stato === 'Fatturata' || (portale && g.stato === 'Documenti inviati')) {
+        if (g.stato === 'Fatturata') {
+          az.push(azBtn('mail', g.mailPronta ? 'Prepara di nuovo la mail' : 'Prepara la mail con fattura e rapportini', g.mailPronta ? 'sec' : ''));
+          if (g.mailPronta) az.push(bt('documenti', 'Mail inviata', g, 'ok'));
+        }
+        if (portale && !g.conf) {
+          if (!g.mailPronta) az.push(azBtn('pdf', g.pdf ? 'Rifai il PDF per il portale' : 'Crea il PDF per il portale', 'sec'));
+          az.push(bt('portale', 'Caricata sul portale', g, 'ok'));
+        }
+        if (g.stato === 'Fatturata') az.push(bt('fattura', 'Correggi i dati della fattura', g, 'sec'));
+      }
+    }
+  }
+  if (!g.privati && !g.vuota && ['Inviata', 'Confermata', 'Fatturata', 'Documenti inviati', 'Caricata sul portale'].indexOf(g.stato) < 0 && (g.altreDitte || []).length)
+    az.push(`<button class="link" data-a="form" data-pf="${esc(nomeG)}" data-az="ditta">Fattura con un'altra ditta</button>`);
+  az.push(`<button class="link" data-a="dettagli" data-pf="${esc(nomeG)}">${V.aperti[nomeG] ? 'Nascondi' : 'Vedi'} interventi</button>`);
+  if (g.stato) az.push(`<button class="link" data-a="form" data-pf="${esc(nomeG)}" data-az="riapri">Riapri</button>`);
+  h += `<div class="azioni">${az.join('')}</div>`;
+  if (V.form && V.form.pf === nomeG) h += formStato(g, V.form.az);
+  if (V.mail && V.mail.key === nomeG) h += pannelloMail(V.mail);
+  if (V.aperti[nomeG]) h += tabellaPf(g);
+  return h + '</div>';
+}
+function pannelloMail(m) {
+  const riga = (lbl, id, val) => `<label>${lbl}</label><div class="euro"><input type="text" id="${id}" value="${esc(val)}" readonly style="max-width:none;font-size:17px;font-weight:400"><button class="btn sec piccolo" data-a="copia" data-id="${id}">Copia</button></div>`;
+  const mailto = 'mailto:' + encodeURIComponent(m.a || '') + '?subject=' + encodeURIComponent(m.oggetto) + (m.cc ? '&cc=' + encodeURIComponent(m.cc) : '') + '&body=' + encodeURIComponent(m.testo);
+  return `<div class="form" style="background:#f4f8ec"><b style="font-size:19px">Mail pronta da mandare</b>
+    <p class="sub">Mandala dalla casella <b>${esc(m.da || '(scheda Firme email)')}</b>. Copia e incolla, poi allega i file.</p>
+    ${riga('A', 'mA', m.a || '(manca l\'email nella scheda Torrefazioni)')}${m.cc ? riga('Cc', 'mCc', m.cc) : ''}${riga('Oggetto', 'mOgg', m.oggetto)}
+    <label>Testo</label><textarea id="mTesto" readonly style="min-height:200px;font-size:16px">${esc(m.testo)}</textarea>
+    <div class="azioni"><button class="btn sec piccolo" data-a="copia" data-id="mTesto">Copia il testo</button></div>
+    <label>Allegati</label>
+    <div class="azioni"><a class="btn piccolo" href="${m.pdfHref}" download="${esc(m.pdfNome)}">Scarica il PDF dei rapportini</a>
+      <a class="link" href="${esc(m.pdfUrl)}" target="_blank" rel="noopener">oppure aprilo in Drive</a></div>
+    ${m.conFattura ? '<p class="sub">Allega anche il <b>PDF della fattura</b> (quello che hai sul computer).</p>' : ''}
+    <div class="azioni" style="margin-top:10px"><a class="btn ok piccolo" href="${mailto}" target="_blank">Apri una mail già compilata</a>
+      <span class="sub">si apre il programma di posta con destinatario, oggetto e testo: aggiungi tu gli allegati</span></div>
+    <div class="azioni"><button class="link" data-a="chiudiMail">Chiudi</button></div></div>`;
+}
+const bt = (az, t, g, cl) => `<button class="btn ${cl === 'sec' ? 'sec' : cl === 'ok' ? 'ok' : ''} piccolo" data-a="form" data-pf="${esc(g.key)}" data-az="${az}">${t}</button>`;
+
+function formStato(g, az) {
+  const testi = {
+    inviata: ['Data di invio', 'Nota (facoltativa)', 'Salva: inviata'],
+    confermata: ['Data della conferma (o della mail di conferma)', 'Nota (facoltativa)', 'Salva: confermata'],
+    correggere: [null, 'Cosa c\'è da correggere?', 'Salva'],
+    fatturata: ['Data della fattura', 'Nota (facoltativa)', 'Salva: fatturata'],
+    documenti: ['Data in cui hai mandato la mail', 'Nota (facoltativa)', 'Salva: inviata'],
+    portale: ['Data di caricamento sul portale', 'Nota (facoltativa)', 'Salva: caricata'],
+    riapri: [null, 'Perché la riapri? (facoltativo)', 'Sì, riapri (cancella date e dati della fattura)']
+  }[az];
+  if (az === 'ditta') return `<div class="form"><label for="fDitta">Con quale ditta si fattura questa proforma?</label>
+    <select class="campo" id="fDitta">${(g.altreDitte || []).map(d => `<option>${esc(d)}</option>`).join('')}</select>
+    <label for="fNota">Perché? (facoltativo)</label><input type="text" id="fNota">
+    <p class="sub">Tutti i ${g.num} rapportini di ${esc(g.torr)} di questo mese passano da ${esc(g.ditta)} alla ditta scelta: proforma, mail, firma e conti per ditta seguono la fattura. Per spostarne solo alcuni: apri il rapportino e correggi la ditta.</p>
+    <div class="azioni"><button class="btn ok" data-a="salvaDittaPf" data-pf="${esc(g.key)}">Sposta i ${g.num} rapportini</button><button class="link" data-a="chiudiForm">Annulla</button></div></div>`;
+  if (az === 'fattura') return `<div class="form"><label for="ftNum">Numero fattura</label><input type="text" id="ftNum" value="${esc(g.ftN || '')}" autocomplete="off">
+    <label for="ftData">Data fattura</label><input type="date" id="ftData" value="${g.fatt ? g.fatt.split('/').reverse().join('-') : D.oggi}">
+    <label for="ftImp">Importo totale della fattura (€)</label><div class="euro"><input type="text" inputmode="decimal" id="ftImp" value="${g.ftImp ? String(g.ftImp).replace('.', ',') : ''}" placeholder="0,00"><span>€</span></div>
+    <p class="sub">Dal registro: imponibile ${euro(g.tot)}, con IVA al 22% ${euro(g.tot * 1.22)}.</p>
+    <div class="azioni"><button class="btn ok" data-a="salvaFattura" data-pf="${esc(g.key)}">Salva</button><button class="link" data-a="chiudiForm">Annulla</button></div></div>`;
+  return `<div class="form">${testi[0] ? `<label for="fData">${testi[0]}</label><input type="date" id="fData" value="${D.oggi}">` : ''}
+    <label for="fNota">${testi[1]}</label><input type="text" id="fNota" value="">
+    <div class="azioni"><button class="btn ok" data-a="salvaStato" data-pf="${esc(g.key)}" data-az="${az}">${testi[2]}</button>
+    <button class="link" data-a="chiudiForm">Annulla</button></div></div>`;
+}
+
+function tabellaPf(g) {
+  const conProb = new Set(D.problemi.filter(p => p.pf === g.key).map(p => p.id));
+  const r = D.interventi.filter(x => x.pf === g.key);
+  return `<table><thead><tr><th>N.</th><th>Data</th><th>Cliente</th><th>Località</th><th>Tecnico</th><th class="e">Totale</th></tr></thead><tbody>
+    ${r.map(x => `<tr class="${conProb.has(x.id) ? 'prob' : ''}" style="cursor:pointer" data-a="apri" data-n="${x.n}"><td><button class="link" data-a="apri" data-n="${x.n}">${esc(x.num)}</button></td><td>${esc(x.data)}</td><td>${esc(x.cliente)}${x.codice && x.codice !== 'MANCANTE' ? `<br><span class="sub">${esc(x.codice)}</span>` : ''}</td><td>${esc(x.officina ? 'Officina' : x.loc)}</td><td>${esc(x.tec)}</td><td class="e">${euro(x.tot)}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ================= PROCEDURA GUIDATA: UNA COSA ALLA VOLTA ================= */
+function vistaWiz() {
+  const tutti = gruppi(V.wiz.pf);
+  const rimasti = tutti.filter(g => !V.wiz.salta.includes(g.key));
+  const titolo = V.wiz.pf ? V.wiz.pf.replace('|', ' · ') : 'tutto il mese';
+  const fatti = V.wiz.fatti;
+  const pct = fatti + tutti.length ? Math.round(100 * fatti / (fatti + tutti.length)) : 100;
+  let h = `<div class="wiztop"><button class="btn sec piccolo" data-a="esciWiz">← Torna al mese</button>
+    <span class="sub">${esc(nomeMese(D.mese))} · ${esc(titolo)}</span></div>
+    <div class="barra"><div style="width:${pct}%"></div></div>`;
+  if (!tutti.length) return h + `<div class="domanda fine"><div class="big">✓</div><h2>Tutto sistemato</h2><p>${fatti ? `Hai sistemato ${fatti} ${fatti === 1 ? 'cosa' : 'cose'}.` : ''}</p><button class="btn" data-a="esciWiz">Torna al mese</button></div>`;
+  if (!rimasti.length) return h + `<div class="domanda fine"><h2>Restano ${tutti.length} cose che hai saltato</h2><p class="sub">Puoi rivederle adesso o tornare più tardi: restano segnate.</p>
+    <div class="azioni" style="justify-content:center"><button class="btn" data-a="rivedi">Rivedile</button><button class="btn sec" data-a="esciWiz">Torna al mese</button></div></div>`;
+  const g = rimasti[0];
+  h += `<p class="sub">Ancora ${tutti.length} da sistemare${V.wiz.salta.length ? ` (${V.wiz.salta.length} saltate)` : ''}</p>`;
+  h += `<div class="domanda">${domanda(g)}<div class="azioni" style="margin-top:18px"><button class="link" data-a="salta" data-k="${esc(g.key)}">Salta per ora</button></div></div>`;
+  return h;
+}
+
+function contesto(occ, max) {
+  const righe = occ.slice(0, max || 4).map(o => {
+    const x = intervento(o.id);
+    return `<div class="contesto"><b>N. ${esc(x.num)}</b> · ${esc(x.data)} · <b>${esc(x.cliente)}</b>${x.officina ? ' · officina' : x.loc ? ' · ' + esc(x.loc) : ''}${x.tec ? ' · ' + esc(x.tec) : ''}
+      ${x.lavoro ? `<br>Lavoro: ${esc(x.lavoro.slice(0, 220))}` : ''}${o.t === 'prezzo' && occ.length > 1 ? `<br>Quantità: <b>${o.q}</b> (${esc(o.pezzo)})` : ''}</div>`;
+  }).join('');
+  return righe + (occ.length > (max || 4) ? `<div class="contesto">…e altri ${occ.length - (max || 4)}</div>` : '');
+}
+
+function domanda(g) {
+  const k = esc(g.key);
+  if (g.t === 'prezzo') {
+    const qTot = g.occ.reduce((a, o) => a + o.q, 0);
+    const diversi = g.occ.some(o => o.q !== 1);
+    let h = `<div class="tipo">Prezzo del pezzo</div><h2>Quanto facciamo pagare?</h2><div class="cosa">${esc(g.occ.length === 1 ? g.occ[0].pezzo : g.nome)}</div>`;
+    if (g.occ.length > 1) h += `<p><b>Compare in ${g.occ.length} rapportini</b> (${qTot} pezzi in tutto): il prezzo vale per tutti.</p>`;
+    h += contesto(g.occ, 3);
+    if (g.su != null) {
+      const tot = g.occ.length === 1 ? g.su * g.occ[0].q : null;
+      h += `<div class="scelta"><div class="lbl">Prezzo suggerito</div>
+        <button class="btn ok sugg" data-a="prezzo" data-k="${k}" data-v="${g.su}">✓ Va bene ${euro(g.su)}${diversi ? ' cad.' : ''}${tot != null && g.occ[0].q > 1 ? ` (${euro(tot)} per ${g.occ[0].q})` : ''}
+        <small>${g.fonte === 'listino' ? 'dal listino' + (g.info ? ': ' + esc(g.info) : '') : 'ultimo prezzo ' + esc(g.info)}</small></button></div>`;
+    }
+    h += `<div class="scelta"><div class="lbl">${g.su != null ? 'Oppure scrivo io' : 'Scrivi il prezzo'}${diversi ? ' (per 1 pezzo)' : ''}</div>
+      <div class="euro"><input type="text" inputmode="decimal" id="inPrezzo" placeholder="0,00" autocomplete="off"><span>€</span>
+      <button class="btn" data-a="prezzoScritto" data-k="${k}">Salva</button></div></div>
+      <div class="azioni"><button class="btn sec piccolo" data-a="garanzia" data-k="${k}">In garanzia / non si paga (0 €)</button>
+      ${g.occ.length > 1 ? `<button class="link" data-a="dividi" data-k="${k}">Prezzi diversi? Uno alla volta</button>` : ''}</div>`;
+    return h;
+  }
+  if (g.t === 'codice') {
+    return `<div class="tipo">Codice Segafredo</div><h2>Manca il codice del cliente</h2><div class="cosa">${esc(g.cliente)}</div>
+      <p>${g.occ.length > 1 ? `In ${g.occ.length} rapportini di questo mese. ` : ''}Si salva nella scheda Codici Segafredo e vale anche per i prossimi mesi.</p>${contesto(g.occ, 2)}
+      <div class="scelta"><div class="lbl">Codice cliente</div><div class="euro"><span>CI</span><input type="text" inputmode="numeric" id="inCodice" placeholder="6 cifre" maxlength="8" autocomplete="off">
+      <button class="btn" data-a="codice" data-k="${k}">Salva</button></div></div>`;
+  }
+  if (g.t === 'loc') {
+    const simili = vicine(g.loc).filter(n => n !== g.loc);
+    const tariffa = `<div class="scelta"><div class="lbl">${simili.length && !g.vuota ? 'Se invece è davvero una località nuova: q' : 'Q'}uanto costa la chiamata a ${esc(g.loc)}?</div><div class="euro"><input type="text" inputmode="decimal" id="inTariffa" placeholder="0,00"><span>€</span>
+      <button class="btn" data-a="tariffa" data-k="${k}">Salva</button></div><p class="sub">Si aggiunge alla scheda Località: la prossima volta il tecnico la trova nell'elenco.</p></div>`;
+    const esistente = g.vuota ? '' : `<div class="scelta"><div class="lbl">${simili.length ? 'Forse il tecnico intendeva:' : 'È una località già in elenco, scritta in un altro modo?'}</div>
+      ${simili.length ? `<div class="azioni">${simili.map(n => `<button class="btn ok piccolo" data-a="usaLoc" data-k="${k}" data-v="${esc(n)}">${esc(n)}</button>`).join('')}</div><p class="sub">Oppure scegli dall'elenco:</p>` : ''}
+      ${selLoc('selLoc')}<div class="azioni"><button class="btn sec" data-a="usaLocSel" data-k="${k}">Usa questa</button></div></div>`;
+    return `<div class="tipo">Tariffa della chiamata</div><h2>${g.vuota ? 'Questa località non ha ancora una tariffa' : 'Località non in elenco'}</h2><div class="cosa">${esc(g.loc)}</div>
+      ${g.occ.length > 1 ? `<p>In ${g.occ.length} rapportini di questo mese.</p>` : ''}${contesto(g.occ, 2)}
+      ${simili.length ? esistente + tariffa : tariffa + esistente}`;
+  }
+  if (g.t === 'altra') {
+    const o = g.occ[0];
+    const scritta = (String(o.note || '').match(/Località:\s*([^\n]+)/i) || [])[1] || '';
+    const pre = scritta ? (D.localita.find(l => norm(l.n) === norm(scritta.trim())) || {}).n || scritta.trim() : '';
+    return `<div class="tipo">Località</div><h2>Dove è stato fatto l'intervento?</h2>
+      <p>Il tecnico non ha trovato la località nell'elenco.${o.note ? '' : ' Non ha scritto note.'}</p>
+      ${o.note ? `<div class="cosa" style="font-size:19px">Note del tecnico: ${esc(o.note)}</div>` : ''}${contesto(g.occ, 1)}
+      <div class="scelta"><div class="lbl">Località</div><input type="text" id="inLoc" list="dlLoc" value="${esc(pre)}" placeholder="Scrivi o scegli" autocomplete="off">
+      <datalist id="dlLoc">${D.localita.map(l => `<option value="${esc(l.n)}">`).join('')}</datalist>
+      <div id="boxTariffa" style="margin-top:10px">${tariffaNuova(pre)}</div>
+      <div class="azioni"><button class="btn" data-a="altra" data-k="${k}">Salva</button></div></div>`;
+  }
+  if (g.t === 'ditta') {
+    return `<div class="tipo">Ditta</div><h2>${g.motivo ? 'Ditta non ammessa per questa torrefazione' : 'Con quale ditta va questo intervento?'}</h2>
+      ${g.motivo ? `<div class="avviso" style="background:var(--rosso-soft)">${esc(g.motivo)} Scegli la ditta giusta:</div>` : ''}${contesto(g.occ, 1)}
+      <div class="scelta"><div class="ditte">${(g.ammesse || D.ditte).map(d => `<button class="btn sec" data-a="ditta" data-k="${k}" data-v="${esc(d)}">${esc(d)}</button>`).join('')}</div></div>`;
+  }
+  if (g.t === 'incasso') {
+    return `<div class="tipo">Incasso</div><h2>Quanto ha incassato il tecnico?</h2>
+      <p>Il registro non riesce a leggere l'importo scritto:</p><div class="cosa">${esc(g.scritto || '(vuoto)')}</div>${contesto(g.occ, 1)}
+      <div class="scelta"><div class="lbl">Importo incassato</div><div class="euro"><input type="text" inputmode="decimal" id="inIncasso" placeholder="0,00"><span>€</span>
+      <button class="btn" data-a="incasso" data-k="${k}">Salva</button></div></div>`;
+  }
+  return '';
+}
+const selLoc = id => `<select class="campo" id="${id}"><option value="">— scegli —</option>${D.localita.filter(l => l.t != null).map(l => `<option value="${esc(l.n)}">${esc(l.n)} (${euro(l.t)})</option>`).join('')}</select>`;
+function tariffaNuova(nome) {
+  const l = D.localita.find(x => x.n === String(nome || '').trim());
+  if (!String(nome || '').trim()) return '';
+  if (l && l.t != null) return `<p class="sub">Tariffa chiamata: <b>${euro(l.t)}</b></p>`;
+  return `<label class="lbl" for="inTariffaNuova"><b>${l ? 'Questa località non ha ancora una tariffa' : 'Località nuova'}: quanto costa la chiamata?</b></label>
+    <div class="euro"><input type="text" inputmode="decimal" id="inTariffaNuova" placeholder="0,00"><span>€</span></div>`;
+}
+// località dell'elenco più simili (per nomi scritti male)
+function vicine(nome) {
+  const a = norm(nome).replace(/[^a-z0-9]/g, '');
+  if (!a) return [];
+  const dist = (x, y) => { const m = []; for (let i = 0; i <= x.length; i++) { m[i] = [i]; for (let j = 1; j <= y.length; j++) m[i][j] = i ? Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1)) : j; } return m[x.length][y.length]; };
+  return D.localita.filter(l => l.t != null).map(l => { const b = norm(l.n).replace(/[^a-z0-9]/g, ''); return { n: l.n, d: (b.includes(a) || a.includes(b)) ? 0 : dist(a, b) }; })
+    .filter(x => x.d <= Math.max(2, Math.floor(a.length / 3))).sort((x, y) => x.d - y.d).slice(0, 4).map(x => x.n);
+}
+
+/* ================= CERCA E CORREGGI UN RAPPORTINO ================= */
+const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)}</span></header>
+  <div class="tabs"><button class="${on === 'mese' ? 'on' : ''}" data-a="vaiMese">Fine mese</button><button class="${on === 'cerca' ? 'on' : ''}" data-a="vaiCerca">Cerca rapportino</button></div>`;
+
+function vistaCerca() {
+  const q = C.q, r = C.ris;
+  let h = schede('cerca') + `<div class="card" style="border-left-color:var(--accent)">
+    <label class="lbl" for="cTesto" style="font-weight:700">Cliente, numero, località, pezzo, matricola…</label>
+    <div class="euro" style="margin-top:6px"><input type="text" id="cTesto" value="${esc(q.testo)}" placeholder="es. bar roma  ·  2026/15  ·  pompa" style="max-width:none;font-size:19px;font-weight:400" autocomplete="off">
+    <button class="btn" data-a="cerca">Cerca</button></div>
+    <div class="filtri">
+      <select id="cTorr" aria-label="Torrefazione"><option value="">Tutte le torrefazioni</option>${(r ? r.torrs : []).map(t => `<option ${t === q.torr ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <select id="cTec" aria-label="Tecnico"><option value="">Tutti i tecnici</option>${(r ? r.tecs : []).map(t => `<option ${t === q.tec ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <select id="cAnno" aria-label="Anno"><option value="">Tutti gli anni</option>${(r ? r.anni : []).map(t => `<option ${String(t) === String(q.anno) ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    </div></div>`;
+  if (!r) return h + '<p class="sub">Scrivi qualcosa e premi Cerca, oppure premi Cerca per vedere gli ultimi rapportini.</p>';
+  h += `<p class="sub">${r.totale ? `${r.totale} rapportin${r.totale === 1 ? 'o' : 'i'}${r.totale > r.risultati.length ? ` (mostro i ${r.risultati.length} più recenti: restringi la ricerca)` : ''}` : 'Nessun rapportino trovato.'}</p>`;
+  h += r.risultati.map(x => `<div class="ris ${x.annullato ? 'ann' : ''}" data-a="apri" data-n="${x.n}"><div><b>N. ${esc(x.num)}</b> · ${esc(x.data)} · <b>${esc(x.cliente)}</b>
+      <div class="sub">${esc(x.torr)} · ${esc(x.ditta)}${x.loc ? ' · ' + esc(x.loc) : ''}${x.tec ? ' · ' + esc(x.tec) : ''}${x.annullato ? ' · ANNULLATO' : ''}</div>
+      <div class="sub">${esc(x.lavoro)}</div></div><div class="num" style="font-size:18px">${euro(x.tot)}</div></div>`).join('');
+  return h;
+}
+
+function vistaRap() {
+  const r = C.rap;
+  const ind = `<div class="wiztop"><button class="btn sec piccolo" data-a="indietro">← ${C.da === 'mese' ? 'Torna al mese' : 'Torna alla ricerca'}</button></div>`;
+  if (!r) return ind + '<p>Carico…</p>';
+  let stato = '';
+  if (r.annullato) stato = `<div class="avviso" style="background:var(--rosso-soft)"><b>${esc(r.annullato)}</b><br>Non entra in proforma né nei conti.</div>`;
+  else if (r.bloccato) stato = `<div class="avviso" style="background:var(--grigio-soft)">La proforma di questo mese è <b>${esc(r.stato.toLowerCase())}</b>: il rapportino si può solo guardare.</div>`;
+  else if (r.stato === 'Inviata' || r.stato === 'Da correggere') stato = `<div class="avviso">La proforma è già stata <b>inviata${r.statoData ? ' il ' + esc(r.statoData) : ''}</b>: se correggi, andrà rimandata.</div>`;
+  let h = ind + `<div class="card ${r.annullato ? 'rosso' : r.bloccato ? 'grigio' : 'blu'}"><div class="riga"><div><h2>N. ${esc(r.num)}</h2>
+    <div class="sub">${esc(r.data)} · ${esc(r.torr)} · ${esc(r.ditta)}${r.tec ? ' · ' + esc(r.tec) : ''}</div></div>
+    <div style="text-align:right"><div class="num">${euro(r.tot)}</div><div class="sub">${r.officina ? 'officina' : 'chiamata ' + (typeof r.chiam === 'number' ? euro(r.chiam) : esc(r.chiam))} · manodopera ${euro(r.mano)} · ricambi ${euro(r.ric)}${r.daprez ? ` · <b style="color:var(--rosso)">${r.daprez} da prezzare</b>` : ''}</div></div></div>
+    <h3 style="font-size:24px;margin-top:10px">${esc(r.cliente || r.macchina)}</h3>${stato}</div>`;
+  const c = r.campi;
+  if (C.modifica) {
+    h += `<div class="card" style="border-left-color:var(--accent)"><h2>Correggi</h2>
+      <label class="lbl" for="mLavoro"><b>Lavoro svolto</b></label><textarea id="mLavoro">${esc(c.lavoro)}</textarea>
+      <label class="lbl" for="mTempo"><b>${r.officina ? 'Ore di lavoro' : 'Tempo di lavoro'}</b></label>
+      <select class="campo" id="mTempo">${(r.tempi.indexOf(c.tempo) < 0 && c.tempo ? [c.tempo] : []).concat(r.tempi).map(t => `<option ${t === c.tempo ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <label class="lbl" for="mPezzi"><b>Pezzi sostituiti</b> <span class="sub">(uno per riga; i prezzi già scritti restano ai pezzi che non cambi)</span></label><textarea id="mPezzi">${esc(c.pezzi)}</textarea>
+      ${r.officina ? '' : `<label class="lbl" for="mLoc"><b>Località</b></label><input type="text" id="mLoc" list="dlLocM" value="${esc(c.loc)}" autocomplete="off">
+        <datalist id="dlLocM">${(D.localita || []).filter(l => l.t != null).map(l => `<option value="${esc(l.n)}">`).join('')}</datalist>`}
+      <label class="lbl" for="mDitta"><b>Ditta</b></label><select class="campo" id="mDitta"><option value="">${r.torr === D.segafredo ? '(automatica: ' + esc(r.ditta) + ')' : '— da assegnare —'}</option>${r.ditte.map(d => `<option ${d === c.ditta ? 'selected' : ''}>${esc(d)}</option>`).join('')}</select>
+      <label class="lbl" for="mNote"><b>Note per l'ufficio</b></label><textarea id="mNote">${esc(c.note)}</textarea>
+      <p class="sub">Per cambiare cliente, torrefazione o tipo di lavoro: annulla questo rapportino e fanne uno nuovo dall'app.</p>
+      <div class="azioni"><button class="btn ok" data-a="salvaMod">Salva le correzioni</button><button class="link" data-a="annullaMod">Lascia stare</button></div></div>`;
+  } else {
+    h += `<div class="card" style="border-left-color:var(--line)">
+      <p><b>Lavoro svolto</b></p><div class="campo-v">${esc(c.lavoro || '—')}</div>
+      <p><b>${r.officina ? 'Ore' : 'Tempo'}:</b> ${esc(c.tempo || '—')}${r.officina ? '' : ` · <b>Località:</b> ${esc(c.loc || '—')}`}</p>
+      <p><b>Pezzi</b></p><div class="campo-v">${esc(c.pezzi || '—')}</div>
+      ${c.note ? `<p><b>Note</b></p><div class="campo-v">${esc(c.note)}</div>` : ''}
+      ${r.foto.length ? `<p><b>Foto</b></p><div class="azioni">${r.foto.map(f => `<a class="btn sec piccolo" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.t.replace(/^Foto\s*/i, '') || 'foto')}</a>`).join('')}</div>` : ''}
+      <div class="azioni" style="margin-top:14px">
+        ${!r.bloccato && !r.annullato && r.permessi !== 'fatture' ? '<button class="btn" data-a="modifica">Correggi</button>' : ''}
+        ${!r.bloccato && r.puoAnnullare && r.permessi !== 'fatture' ? (r.annullato ? '<button class="btn sec" data-a="riattiva">Riattiva il rapportino</button>' : '<button class="btn sec" data-a="chiediAnnulla" style="color:var(--rosso);border-color:var(--rosso)">Annulla il rapportino</button>') : ''}
+      </div>
+      ${C.annulla ? `<div class="form" style="background:var(--rosso-soft)"><label for="mMotivo"><b>Perché lo annulli?</b> (es. doppione, fatto per sbaglio)</label><input type="text" id="mMotivo">
+        <p class="sub">Resta nel registro con il suo numero, ma esce da proforma e conti. Si può riattivare.</p>
+        <div class="azioni"><button class="btn" style="background:var(--rosso)" data-a="confAnnulla">Sì, annulla</button><button class="link" data-a="noAnnulla">Lascia stare</button></div></div>` : ''}
+    </div>
+    <details class="card" style="border-left-color:var(--line)"><summary style="cursor:pointer;font-weight:700">Tutte le risposte del rapportino</summary>
+      <dl class="tutto">${r.risposte.map(x => `<dt>${esc(x.t)}</dt><dd>${/^https?:\/\//.test(x.v) ? `<a href="${esc(x.v)}" target="_blank" rel="noopener">apri</a>` : esc(x.v)}</dd>`).join('')}</dl></details>`;
+  }
+  return h;
+}
+
+async function cerca() {
+  C.q = { testo: ($('cTesto') || {}).value || '', torr: ($('cTorr') || {}).value || '', tec: ($('cTec') || {}).value || '', anno: ($('cAnno') || {}).value || '' };
+  $('busy').textContent = 'Cerco…'; $('busy').classList.add('on');
+  try { C.ris = await run('uffCerca', K, C.q); } catch (e) { toast(errMsg(e), 'err'); }
+  finally { $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; render(); }
+}
+async function apri(n, da) {
+  C.da = da; C.rap = null; C.modifica = false; C.annulla = false; V.vista = 'rap'; render(); window.scrollTo(0, 0);
+  try { C.rap = await run('uffRapportino', K, Number(n)); } catch (e) { toast(errMsg(e), 'err'); V.vista = da === 'mese' ? 'mese' : 'cerca'; }
+  render();
+}
+async function salvaRap(fn, args, msg) {
+  if (V.busy) return;
+  V.busy = true; $('busy').classList.add('on');
+  try { C.rap = await run(fn, K, C.rap.n, ...args); C.modifica = false; C.annulla = false; C.sporco = true; toast(msg, 'ok'); }
+  catch (e) { toast(errMsg(e), 'err'); }
+  finally { V.busy = false; $('busy').classList.remove('on'); render(); }
+}
+
+/* ================= AZIONI ================= */
+function gruppoDa(k) { return gruppi(V.wiz && V.wiz.pf).find(g => g.key === k); }
+function fatto(ok) { if (ok && V.wiz) { V.wiz.fatti++; render(); } }
+
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-a]');
+  if (!b || V.busy) return;
+  const a = b.dataset.a, k = b.dataset.k, g = k ? gruppoDa(k) : null;
+  if (a === 'mese') return caricaMese(spostaMese(D.mese, Number(b.dataset.d)));
+  if (a === 'esci') { salvaCod(''); K = ''; D = null; return vistaCodice(false); }
+  if (a === 'vaiMese') { V.vista = 'mese'; if (C.sporco) { C.sporco = false; return caricaMese(D.mese); } return render(); }
+  if (a === 'vaiCerca') { V.vista = 'cerca'; render(); if (!C.ris) cerca(); return; }
+  if (a === 'cerca') return cerca();
+  if (a === 'apri') { ev.stopPropagation(); return apri(b.dataset.n, V.vista === 'mese' ? 'mese' : 'cerca'); }
+  if (a === 'indietro') { V.vista = C.da === 'mese' ? 'mese' : 'cerca'; if (C.sporco) { C.sporco = false; if (V.vista === 'mese') return caricaMese(D.mese); return cerca(); } return render(); }
+  if (a === 'modifica') { C.modifica = true; return render(); }
+  if (a === 'annullaMod') { C.modifica = false; return render(); }
+  if (a === 'chiediAnnulla') { C.annulla = true; render(); const m = $('mMotivo'); if (m) m.focus(); return; }
+  if (a === 'noAnnulla') { C.annulla = false; return render(); }
+  if (a === 'salvaMod') {
+    if ((C.rap.stato === 'Inviata' || C.rap.stato === 'Da correggere') && !confirm('La proforma è già stata inviata: dopo la correzione andrà rimandata. Salvo?')) return;
+    const campi = { lavoro: $('mLavoro').value, tempo: $('mTempo').value, pezzi: $('mPezzi').value, note: $('mNote').value, ditta: $('mDitta').value };
+    if ($('mLoc')) campi.loc = $('mLoc').value;
+    return salvaRap('uffModifica', [campi], 'Correzioni salvate');
+  }
+  if (a === 'confAnnulla') { const m = $('mMotivo').value.trim(); if (!m) return toast('Scrivi perché lo annulli', 'err'); return salvaRap('uffAnnulla', [m, false], 'Rapportino annullato'); }
+  if (a === 'riattiva') return salvaRap('uffAnnulla', ['', true], 'Rapportino riattivato');
+  if (a === 'wiz') { V.vista = 'wiz'; V.wiz = { pf: b.dataset.pf || null, salta: [], fatti: 0 }; V.dividi = {}; window.scrollTo(0, 0); return render(); }
+  if (a === 'esciWiz') { V.vista = 'mese'; V.wiz = null; return render(); }
+  if (a === 'rivedi') { V.wiz.salta = []; return render(); }
+  if (a === 'salta') { V.wiz.salta.push(k); return render(); }
+  if (a === 'dividi') { V.dividi[k] = true; return render(); }
+  if (a === 'dettagli') { V.aperti[b.dataset.pf] = !V.aperti[b.dataset.pf]; return render(); }
+  if (a === 'form') { V.form = { pf: b.dataset.pf, az: b.dataset.az }; render(); const f = $('fNota'); if (f && b.dataset.az === 'correggere') f.focus(); return; }
+  if (a === 'chiudiForm') { V.form = null; return render(); }
+  if (a === 'pdf') {
+    const gp = D.proforma.find(x => x.key === b.dataset.pf);
+    $('busy').textContent = 'Preparo il PDF… (può volerci qualche minuto)';
+    await salva('uffPdf', [gp.torr, gp.ditta], 'PDF pronto');
+    $('busy').textContent = 'Salvo…';
+    return;
+  }
+  if (a === 'mail') {
+    const gp = D.proforma.find(x => x.key === b.dataset.pf);
+    $('busy').textContent = 'Preparo il PDF e il testo… (può volerci qualche minuto)';
+    const ok = await salva('uffMail', [gp.torr, gp.ditta], 'Mail pronta: copia, incolla e allega');
+    $('busy').textContent = 'Salvo…';
+    if (ok && D.mail) {
+      if (V.mail && V.mail.pdfHref) URL.revokeObjectURL(V.mail.pdfHref);
+      const bytes = Uint8Array.from(atob(D.mail.pdfB64), c => c.charCodeAt(0));
+      V.mail = Object.assign({}, D.mail, { pdfB64: '', pdfHref: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })) });
+      D.mail = null; render();
+    }
+    return;
+  }
+  if (a === 'chiudiMail') { V.mail = null; return render(); }
+  if (a === 'copia') {
+    const el = $(b.dataset.id); if (!el) return;
+    let ok = false;
+    try { await navigator.clipboard.writeText(el.value); ok = true; } catch (e) { /* nella pagina di Google a volte non è permesso */ }
+    if (!ok) { el.removeAttribute('readonly'); el.select(); try { ok = document.execCommand('copy'); } catch (e) { ok = false; } el.setAttribute('readonly', ''); }
+    return toast(ok ? 'Copiato' : 'Seleziona il testo e copialo a mano (Cmd+C)', ok ? 'ok' : 'err');
+  }
+  if (a === 'salvaDittaPf') {
+    const gp = D.proforma.find(x => x.key === b.dataset.pf);
+    const nuova = $('fDitta').value;
+    if (!confirm(`Spostare i ${gp.num} rapportini di ${gp.torr} da ${gp.ditta} a ${nuova}?`)) return;
+    const ok = await salva('uffCambiaDittaProforma', [gp.torr, gp.ditta, nuova, $('fNota').value.trim()], `Proforma spostata su ${nuova}`);
+    if (ok) V.form = null; return render();
+  }
+  if (a === 'salvaFattura') {
+    const gp = D.proforma.find(x => x.key === b.dataset.pf);
+    const imp = leggiEuro($('ftImp').value);
+    if (!$('ftNum').value.trim()) return toast('Scrivi il numero della fattura', 'err');
+    if (isNaN(imp) || imp <= 0) return toast('Scrivi l\'importo della fattura', 'err');
+    const file = null;
+    const ok = await salva('uffFattura', [gp.torr, gp.ditta, { num: $('ftNum').value.trim(), data: $('ftData').value, importo: imp }, file], 'Fattura salvata');
+    if (ok) V.form = null; return render();
+  }
+  if (a === 'salvaStato') {
+    const gp = D.proforma.find(x => x.key === b.dataset.pf);
+    const data = $('fData') ? $('fData').value : '';
+    const ok = await salva('uffStato', [gp.torr, gp.ditta, b.dataset.az, data, ($('fNota') ? $('fNota').value : '').trim()], 'Salvato');
+    if (ok) V.form = null; return render();
+  }
+  if (!g) return;
+  if (a === 'prezzo' || a === 'prezzoScritto' || a === 'garanzia') {
+    const u = a === 'garanzia' ? 0 : a === 'prezzo' ? Number(b.dataset.v) : leggiEuro($('inPrezzo').value);
+    if (!(u >= 0) || isNaN(u)) return toast('Scrivi un prezzo (es. 12,50)', 'err');
+    if (u > 2000 && !confirm(`Prezzo di ${euro(u)}: è giusto?`)) return;
+    const righe = g.occ.map(o => ({ id: o.id, pos: o.pos, prezzo: Math.round(u * o.q * 100) / 100 }));
+    return fatto(await salva('uffSalvaPrezzi', [righe, a === 'garanzia' ? 'Garanzia / non si paga' : ''], 'Prezzo salvato'));
+  }
+  if (a === 'codice') {
+    const c = $('inCodice').value.replace(/\s/g, '').replace(/^ci/i, '');
+    if (!/^\d{6}$/.test(c)) return toast('Il codice è CI seguito da 6 cifre', 'err');
+    return fatto(await salva('uffSalvaCodice', [g.cliente, 'CI' + c], 'Codice salvato'));
+  }
+  if (a === 'tariffa') {
+    const t = leggiEuro($('inTariffa').value);
+    if (isNaN(t) || t < 0) return toast('Scrivi la tariffa (es. 35)', 'err');
+    return fatto(await salva('uffSalvaTariffa', [g.loc, t], 'Tariffa salvata'));
+  }
+  if (a === 'usaLoc' || a === 'usaLocSel') {
+    const n = a === 'usaLoc' ? b.dataset.v : $('selLoc').value;
+    if (!n) return toast('Scegli una località', 'err');
+    let ok = true;
+    for (const o of g.occ) { ok = await salva('uffCambiaLocalita', [o.n, n, ''], null) && ok; if (!ok) break; }
+    if (ok) toast('Località corretta', 'ok');
+    return fatto(ok);
+  }
+  if (a === 'altra') {
+    const n = $('inLoc').value.trim();
+    if (!n) return toast('Scrivi la località', 'err');
+    const tn = $('inTariffaNuova');
+    const t = tn ? leggiEuro(tn.value) : '';
+    if (tn && (isNaN(t) || t < 0)) return toast('Scrivi la tariffa della chiamata', 'err');
+    return fatto(await salva('uffCambiaLocalita', [g.occ[0].n, n, t], 'Località salvata'));
+  }
+  if (a === 'ditta') return fatto(await salva('uffSalvaDitta', [g.occ[0].n, b.dataset.v], 'Ditta salvata'));
+  if (a === 'incasso') {
+    const v = leggiEuro($('inIncasso').value);
+    if (isNaN(v) || v < 0) return toast('Scrivi l\'importo (es. 80)', 'err');
+    return fatto(await salva('uffSalvaIncasso', [g.occ[0].n, v], 'Importo salvato'));
+  }
+});
+document.addEventListener('change', ev => { if (ev.target.id === 'selMese') caricaMese(ev.target.value); });
+document.addEventListener('input', ev => { if (ev.target.id === 'inLoc') $('boxTariffa').innerHTML = tariffaNuova(ev.target.value); });
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter' || !ev.target.matches('input')) return;
+  if (ev.target.id === 'cTesto') { ev.preventDefault(); cerca(); return; }
+  const btn = ev.target.closest('.scelta, .form') && ev.target.closest('.scelta, .form').querySelector('.btn[data-a]:not(.sec)');
+  if (btn) { ev.preventDefault(); btn.click(); }
+});
+
+function render() {
+  if (!D) return;
+  $('app').innerHTML = V.vista === 'wiz' ? vistaWiz() : V.vista === 'cerca' ? vistaCerca() : V.vista === 'rap' ? vistaRap() : vistaMese();
+  const primo = document.querySelector('.domanda input[type=text]');
+  if (primo && !primo.value && window.innerWidth > 700) primo.focus();
+}
+
+// codice personale: si chiede la prima volta su ogni computer, poi resta ricordato (finché non premi "Esci")
+function vistaCodice(sbagliato) {
+  $('app').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto;border-left-color:var(--accent)"><h2>Codice personale</h2>
+    <p class="sub">La prima volta su questo computer serve il tuo codice personale (4-6 cifre). Poi non lo chiede più.</p>
+    ${sbagliato ? '<div class="avviso" style="background:var(--rosso-soft)">Codice sbagliato. Riprova.</div>' : ''}
+    <div class="euro" style="margin-top:10px"><input type="password" inputmode="numeric" id="inCod" maxlength="6" autocomplete="off" style="letter-spacing:.3em">
+    <button class="btn" id="btnCod">Entra</button></div></div>`;
+  const entra = () => { const c = $('inCod').value.trim(); if (!/^\d{4,6}$/.test(c)) return toast('Il codice ha 4-6 cifre', 'err'); salvaCod(c); K = CHIAVE + ':' + c; caricaMese(''); };
+  $('btnCod').onclick = entra;
+  $('inCod').onkeydown = ev => { if (ev.key === 'Enter') entra(); };
+  $('inCod').focus();
+}
+
+function partenza() {
+  if (!DENTRO_GOOGLE) return entraConChiave(new URLSearchParams(location.search).get('u') || '');
+  if (!google.script.url) { $('app').innerHTML = '<p>Apri la pagina dal suo link.</p>'; return; }
+  google.script.url.getLocation(loc => entraConChiave((loc && loc.parameter && loc.parameter.u) || ''));
+}
+function entraConChiave(u) {
+  {
+    CHIAVE = u;
+    if (!CHIAVE) { $('app').innerHTML = '<p>Link non valido: manca la chiave dopo ?u=</p>'; return; }
+    const c = leggiCod();
+    if (!c) return vistaCodice(false);
+    K = CHIAVE + ':' + c;
+    $('app').innerHTML = '<p>Leggo il registro…</p>';
+    caricaMese('');
+  }
+}
+partenza();
+</script>
+</body>
+</html>
