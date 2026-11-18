@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rapportini</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rapportini">
+<meta name="theme-color" content="#2c4560">
+<link rel="icon" href="icona-192.png">
+<link rel="apple-touch-icon" href="icona-180.png">
+<style>
+/* Industry — design-system tokens and component classes. This file is the source of truth for the system's look; retune it here and see readme.md. */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
+
+:root {
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-accent-2: #728fab;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
+     same step of any role matches the others in visual value. */
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-400: #b7b7ba;
+  --color-neutral-500: #98989b;
+  --color-neutral-600: #7a7a7d;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --color-accent-100: #eef6ff;
+  --color-accent-200: #d6ebff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-accent-2-100: #eef6ff;
+  --color-accent-2-200: #d6ebff;
+  --color-accent-2-300: #bdd8f2;
+  --color-accent-2-400: #9ebbd8;
+  --color-accent-2-500: #7e9cb8;
+  --color-accent-2-600: #627d98;
+  --color-accent-2-700: #486077;
+  --color-accent-2-800: #314457;
+  --color-accent-2-900: #1f2d3a;
+
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Barlow", system-ui, sans-serif;
+
+  --space-1: 3.4px;
+  --space-2: 6.8px;
+  --space-3: 10.2px;
+  --space-4: 13.6px;
+  --space-6: 20.4px;
+  --space-8: 27.2px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
+
+  /* Elevation — derived from the ground: soft ink-tinted shadows on a
+     light theme, a hairline edge + ambient darkness on a dark one. */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+
+.blueprint {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+/* The overlay image treatments (halftone, duotone) clip their overlay
+   (overflow:hidden); a blueprint wrapper draws its registration marks
+   outside the box, so when both classes share a wrapper the frame must
+   win. */
+.blueprint.halftone, .blueprint.plate, .blueprint.duotone { overflow: visible; }
+.blueprint > .corner {
+  position: absolute; width: 11px; height: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.blueprint > .corner::before, .blueprint > .corner::after {
+  content: ""; position: absolute; background: currentColor;
+}
+.blueprint > .corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+.blueprint > .corner::after  { top: 5px; left: 0; width: 100%; height: 1px; }
+.blueprint > .corner.tl { top: -6px; left: -6px; }
+.blueprint > .corner.tr { top: -6px; right: -6px; }
+.blueprint > .corner.bl { bottom: -6px; left: -6px; }
+.blueprint > .corner.br { bottom: -6px; right: -6px; }
+
+.duotone{position:relative;overflow:hidden}
+.duotone::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--color-accent);mix-blend-mode:color}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Components — built with the tokens above. Plain CSS
+   on plain HTML: no JavaScript, no build step. Each class is documented in
+   readme.md and demonstrated in foundations/ and components/.
+   ══════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+h1 { font-size: 42px; }
+h2 { font-size: 32px; }
+h3 { font-size: 25px; }
+h4 { font-size: 20px; }
+h5 { font-size: 16px; }
+h6 { font-size: 13px; }
+h6 { letter-spacing: 0.08em; text-transform: uppercase; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent); text-underline-offset: 3px; }
+img { display: block; max-width: 100%; }
+figure { margin: 0; }
+figcaption {
+  font-size: 11px; margin-top: var(--space-1);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+/* — rules — */
+.hr {
+  height: 1px; border: 0; margin: var(--space-4) 0;
+  background: var(--color-divider);
+}
+
+/* — buttons — */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 14px; line-height: 1.2; color: var(--color-text); /* matches the .input's 14px —
+     the pair sits side by side in sign-up rows */
+  background: transparent; border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--color-accent); color: var(--color-bg); }
+.btn-primary:hover { background: var(--color-accent-600); }
+.btn-primary:active { background: var(--color-accent-700); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.btn-icon { width: 36px; height: 36px; padding: 0; }
+.btn-block { width: 100%; margin-top: var(--space-2); }
+
+/* — forms — */
+.field > label {
+  display: block; font-size: 12px; margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+textarea.input { min-height: 90px; resize: vertical; }
+.radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.radio input, .seg-opt input {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.radio .dot {
+  width: 16px; height: 16px; flex: none; border-radius: 50%;
+  border: 1.5px solid var(--color-divider);
+}
+.radio:hover .dot { border-color: var(--color-accent); }
+.radio input:checked + .dot {
+  border-color: var(--color-accent); background: var(--color-accent);
+  box-shadow: inset 0 0 0 4px var(--color-bg);
+}
+.radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.seg {
+  display: inline-flex; overflow: hidden;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+}
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* — cards — */
+.card {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface);
+}
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.card-title {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 17px; line-height: 1.2;
+}
+.card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.card-meta {
+  display: flex; align-items: center; gap: 6px; font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.tag {
+  display: inline-flex; align-items: center; font-size: 11px;
+  letter-spacing: 0.02em; padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+/* — navigation — */
+.nav {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: none;
+}
+.nav-brand {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 18px; margin-right: auto;
+}
+.nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
+
+/* — tables — */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
+}
+.table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+
+/* — dialog — */
+.dialog-backdrop {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+}
+.dialog {
+  width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4); border-radius: var(--radius-lg);
+  background: var(--color-surface); box-shadow: var(--shadow-lg);
+}
+.dialog-title {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 20px;
+}
+.dialog-body { font-size: 14px; opacity: 0.85; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+
+/* — blueprint frame: components are wireframe objects (see .blueprint
+     and .corner above) — square, transparent, hairline-bordered — */
+.card, .btn, .input, .tag, .seg, .dialog { border-radius: 0; }
+.card, .dialog { background: transparent; border: 1px solid var(--color-divider); }
+.btn { border: 1px solid var(--color-divider); }
+.btn-primary { border-color: var(--color-accent); }
+.btn-ghost { border-color: transparent; }
+
+
+</style>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);-webkit-text-size-adjust:100%}
+input,textarea,button{font-family:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+::placeholder{color:var(--color-neutral-600);opacity:1}
+#app{height:100dvh;height:100vh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;background:var(--color-bg);position:relative;overflow:hidden}
+@supports(height:100dvh){#app{height:100dvh}}
+.hdr{flex:none;border-bottom:2px solid var(--color-text);padding:8px 14px 12px 6px;background:var(--color-bg)}
+.hdr-row{display:flex;align-items:center;gap:4px}
+.ico-btn{width:52px;height:52px;flex:none;border:0;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--color-text)}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-accent-700)}
+.h-title{font-family:var(--font-heading);font-weight:600;font-size:27px;line-height:1.05}
+.h-step{font-family:var(--font-heading);font-weight:600;font-size:20px;color:var(--color-neutral-800)}
+.segs{display:flex;gap:4px;margin:10px 0 0 8px}.segs div{flex:1;height:6px;background:var(--color-neutral-400)}.segs div.on{background:var(--color-accent-800)}
+.saved{margin:8px 0 0 8px;font-size:13px;font-weight:600;color:var(--color-neutral-800);display:flex;gap:6px;align-items:center}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.pad{padding:24px 20px 32px;display:flex;flex-direction:column;gap:28px}
+.lbl{font-size:19px;font-weight:700;color:#14202c;margin:0 0 10px;line-height:1.25}
+.lbl span{font-weight:400;font-size:15px;color:var(--color-neutral-800)}
+/* domande: quella da compilare adesso è evidenziata, le altre mancanti hanno un pallino (0.11) */
+.q{position:relative;transition:background .2s}
+.q.next{border-left:6px solid #d97706;background:#fff7ea;margin-left:-20px;margin-right:-20px;padding:14px 20px 16px 14px}
+.q.next>.lbl:first-child::after,.q.next>div>.lbl:first-child::after{content:"  ← da compilare";font-size:14px;font-weight:700;color:#b45309}
+.q.todo>.lbl:first-child::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#d97706;margin-right:8px;vertical-align:middle}
+.q.flash{animation:flash 1s ease 2}
+@keyframes flash{0%,100%{background:#fff7ea}50%{background:#fde3b5}}
+.facolt{border:1px dashed var(--color-neutral-400);padding:0}
+.facolt>button{width:100%;min-height:52px;background:none;border:0;text-align:left;padding:0 14px;font-size:16px;color:var(--color-neutral-800);display:flex;justify-content:space-between;align-items:center;font-family:inherit}
+.facolt>div{padding:4px 14px 14px}
+.ftr .vai{display:block;margin:8px auto 0;background:none;border:0;color:var(--color-neutral-800);text-decoration:underline;font-size:15px;min-height:40px;font-family:inherit}
+.big-btn.manca{background:#b45309;border-color:#b45309}
+.q.next.bad{outline:0}
+.hint{margin-top:6px;font-size:14px;color:var(--color-neutral-800)}
+.inp{width:100%;height:56px;padding:0 16px;font-size:18px;color:var(--color-text);background:#fff;border:2px solid var(--color-neutral-800);border-radius:0;outline:none;-webkit-appearance:none;appearance:none}
+.inp.mono{font-family:ui-monospace,Menlo,monospace;font-size:17px;text-transform:uppercase;padding:0 12px}
+.inp.month{padding:0 8px;font-size:16px}
+.ta{width:100%;min-height:110px;padding:14px 16px;font-size:17px;line-height:1.4;color:var(--color-text);background:#fff;border:2px solid var(--color-neutral-800);border-radius:0;outline:none;resize:vertical;-webkit-appearance:none}
+.inp:focus,.ta:focus{border-color:var(--color-accent-800);box-shadow:0 0 0 2px var(--color-accent-400)}
+.search{position:relative}.search .inp{padding-left:48px}.search svg{position:absolute;left:16px;top:17px;color:var(--color-neutral-800)}
+.grid1{display:flex;flex-direction:column;gap:8px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.opt{min-height:56px;padding:6px 10px;border:2px solid var(--color-neutral-800);background:#fff;color:var(--color-text);font-family:var(--font-heading);font-weight:600;font-size:20px;line-height:1.1}
+.opt.on{background:var(--color-accent-800);border-color:var(--color-accent-800);color:#fff}
+.opt.row{display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:21px;text-align:left}
+.opt.sm{font-size:17px;min-height:52px}
+.opt.tall{min-height:64px}
+.btn2{min-height:48px;padding:0 14px;border:2px solid var(--color-neutral-800);background:#fff;color:var(--color-text);font-family:var(--font-heading);font-weight:600;font-size:17px}
+.btn2.acc{border-color:var(--color-accent-800);color:var(--color-accent-800)}
+.link{min-height:44px;border:0;background:transparent;color:var(--color-accent-800);font-weight:700;font-size:16px;padding:0;text-decoration:underline;text-underline-offset:3px}
+.chip{min-height:44px;padding:0 12px;border:2px solid var(--color-neutral-700);background:#fff;color:var(--color-text);font-size:15px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.sel-box{background:#fff;border:2px solid var(--color-accent-800);padding:12px 8px 12px 16px;display:flex;gap:12px;align-items:center}
+.sel-box .t{flex:1;min-width:0}.sel-box .n{font-family:var(--font-heading);font-weight:600;font-size:23px;line-height:1.1}.sel-box .s{font-size:15px;color:var(--color-neutral-800);margin-top:3px}
+.sugg{border:2px solid var(--color-neutral-800);border-top:0;background:#fff}
+.sugg button{width:100%;text-align:left;min-height:62px;padding:8px 16px;background:#fff;border:0;border-bottom:1px solid var(--color-neutral-300);display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--color-text)}
+.sugg .sn{display:flex;flex-direction:column;min-width:0}.sugg .sn b{font-size:17px}.sugg .sn small{font-size:14px;color:var(--color-neutral-800)}
+.sugg .code{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--color-accent-700);white-space:nowrap}
+.sugg .new{background:var(--color-accent-100);color:var(--color-accent-800);font-weight:700;font-size:16px;min-height:56px}
+.sugg .none{padding:14px 16px;font-size:15px;color:var(--color-neutral-800)}
+.warn{border:2px solid #b3261e;background:#fff;padding:12px 14px;font-size:16px;line-height:1.4;color:#7a1610;font-weight:600}
+.warn-in{margin:16px 20px 0}
+.info{font-size:15px;color:var(--color-accent-800);background:var(--color-accent-100);padding:10px 12px;border:1px solid var(--color-accent-300)}
+.bad{outline:2px solid #b3261e;outline-offset:6px}
+.card{background:#fff;border:2px solid var(--color-neutral-700)}
+.card.on{border-color:var(--color-accent-800)}.card.bad{border-color:#b3261e;outline:0}
+.card-h{padding:12px;display:flex;flex-direction:column;gap:10px}
+.card-t{font-family:var(--font-heading);font-weight:600;font-size:23px;line-height:1.1;padding-left:4px}
+.card-b{border-top:1px solid var(--color-neutral-300);padding:16px;display:flex;flex-direction:column;gap:16px}
+.sub-t{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700)}
+.split{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:8px}
+.foto-btn{width:100%;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--color-accent-800);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-heading);font-weight:600;font-size:20px}
+.foto-alt{display:flex;justify-content:space-between;gap:12px;margin-top:6px;font-size:15px}
+.foto-btn.big{min-height:150px;flex-direction:column;font-size:22px}
+.foto-ok{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--color-neutral-800);padding:6px 8px 6px 6px}
+.foto-ok img,.foto-ok .ph{width:72px;height:54px;flex:none;object-fit:cover;background:var(--color-neutral-200);border:1px solid var(--color-neutral-700)}
+.foto-ok .m{flex:1;font-size:16px;font-weight:700;color:var(--color-accent-800)}.foto-ok .m.err{color:#b3261e}
+.pezzo{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;background:#fff;border:2px solid var(--color-neutral-800)}
+.pezzo .n{flex:1;min-width:0;font-size:17px;font-weight:600;line-height:1.25}
+.pezzo .q{width:40px;text-align:center;font-family:var(--font-heading);font-size:28px;font-weight:600}
+.qbtn{width:48px;height:48px;flex:none;border:2px solid var(--color-neutral-700);background:#fff;color:var(--color-text);display:flex;align-items:center;justify-content:center}
+.empty{padding:16px;border:2px dashed var(--color-neutral-700);font-size:16px;color:var(--color-neutral-800);text-align:center}
+.stepper{margin-top:8px;background:#fff;border:2px solid var(--color-accent-800);padding:8px;display:flex;align-items:center;gap:8px}
+.stepper .v{flex:1;text-align:center;font-family:var(--font-heading);font-weight:600;font-size:32px;line-height:1}
+.check{min-height:72px;padding:12px 16px;display:flex;align-items:center;gap:14px;text-align:left;border:2px solid var(--color-neutral-800);background:#fff;color:var(--color-text);width:100%}
+.check.on{border-color:var(--color-accent-800);background:var(--color-accent-100)}
+.check .box{width:34px;height:34px;flex:none;border:2px solid var(--color-neutral-800);background:#fff;color:#fff;display:flex;align-items:center;justify-content:center}
+.check.on .box{border-color:var(--color-accent-800);background:var(--color-accent-800)}
+.check .l{font-size:18px;font-weight:600;line-height:1.3}
+.sec{position:relative;background:#fff;border:2px solid var(--color-neutral-800)}
+.sec-h{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 8px 16px;border-bottom:1px solid var(--color-neutral-300)}
+.sec-h div{font-family:var(--font-heading);font-weight:600;font-size:22px}
+.sec-sum{padding:10px 16px 2px;font-size:16px;line-height:1.35}
+.sec-rows{padding:2px 16px 6px}
+.sec-row{display:grid;grid-template-columns:112px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--color-neutral-200)}
+.sec-row .k{font-size:14px;color:var(--color-neutral-800);line-height:1.35}.sec-row .v{font-size:16px;font-weight:600;line-height:1.35;white-space:pre-line;overflow-wrap:anywhere}
+.sec-row .v.miss{color:#b3261e}.sec-row .v.dim{color:var(--color-neutral-800)}
+.sec-tg{width:100%;min-height:48px;border:0;border-top:1px solid var(--color-neutral-300);background:transparent;color:var(--color-accent-800);font-size:15px;font-weight:700;text-align:left;padding:0 16px}
+.ftr{flex:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom));background:var(--color-bg);border-top:1px solid var(--color-neutral-400)}
+.big-btn{position:relative;width:100%;min-height:72px;border:2px solid var(--color-accent-800);background:var(--color-accent-800);color:#fff;font-family:var(--font-heading);font-weight:600;font-size:25px}
+.big-btn.dis{background:var(--color-neutral-400);border-color:var(--color-neutral-400);color:var(--color-neutral-900)}
+.big-btn.sec2{background:#fff;color:var(--color-accent-800);min-height:56px;font-size:20px}
+.choice{position:relative;min-height:136px;text-align:left;padding:20px;background:#fff;border:2px solid var(--color-text);display:flex;flex-direction:column;justify-content:flex-end;gap:6px;color:var(--color-text);width:100%}
+.choice b{font-family:var(--font-heading);font-weight:600;font-size:32px;line-height:1}.choice span{font-size:16px;color:var(--color-neutral-800)}
+.overlay{position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 55%,transparent);display:flex;flex-direction:column;z-index:5}
+.aiuto-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--color-text);background:#fff;font-family:var(--font-heading);font-size:24px;font-weight:700;color:var(--color-text);flex:none}
+.aiuto-q{border:2px solid var(--color-neutral-700);background:#fff;margin-bottom:8px}.aiuto-q summary{padding:14px 16px;font-size:18px;font-weight:700;cursor:pointer}
+.aiuto-q p{margin:0;padding:0 16px 14px;font-size:17px;line-height:1.45}
+.aiuto-cosa{font-size:19px;line-height:1.45;background:#fffbe6;border:2px dashed #d9c27a;padding:12px 14px;margin:0 0 14px}
+.sheet{background:var(--color-bg);border-top:2px solid var(--color-text);max-height:85%;display:flex;flex-direction:column}
+.sheet-h{display:flex;align-items:center;padding:10px 6px 8px 20px}.sheet-h div{flex:1;font-family:var(--font-heading);font-size:27px;font-weight:600}
+.sheet-l{overflow-y:auto;padding:0 16px 24px}
+.sheet-it{min-height:56px;padding:0 12px 0 16px;display:flex;align-items:center;gap:10px;text-align:left;border:2px solid var(--color-neutral-700);background:#fff;color:var(--color-text);width:100%}
+.sheet-it span{flex:1;font-size:17px;font-weight:600}.sheet-it small{font-size:13px;color:var(--color-accent-700);font-weight:700}
+.sig{position:relative;background:#fff;border:2px solid var(--color-neutral-800);height:190px}
+.sig canvas{width:100%;height:100%;display:block;touch-action:none}
+.sig-prev{width:100%;padding:0;cursor:pointer;display:block}
+.sig-prev img{width:100%;height:100%;object-fit:contain;max-width:none}
+.sig-cta{position:absolute;inset:0 0 40px 0;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;font-size:22px;color:var(--color-accent-800)}
+.firma-full{position:fixed;inset:0;z-index:50;background:var(--color-bg);display:flex;flex-direction:column;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.firma-full .ff-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--font-heading);font-weight:600;font-size:20px}
+.firma-full .ff-h small{font-family:var(--font-body,inherit);font-weight:400;font-size:14px;color:var(--color-neutral-800)}
+.firma-full .sig{flex:1 1 0;min-height:0;height:auto;margin:8px 0}
+.firma-full .sig canvas{position:absolute;inset:0}
+@media (max-height:500px){.firma-full .ff-h small{display:none}.firma-full .ff-h{font-size:16px}.firma-full .big-btn{min-height:44px;font-size:17px}.firma-full .sig{margin:4px 0}}
+.firma-full .ff-b{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.sig .line{position:absolute;left:16px;right:16px;bottom:38px;border-top:1px solid var(--color-neutral-700);pointer-events:none}
+.sig .t{position:absolute;left:16px;bottom:12px;font-size:13px;color:var(--color-neutral-800);pointer-events:none}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;gap:20px}
+.spin{width:44px;height:44px;border:4px solid var(--color-neutral-300);border-top-color:var(--color-accent-800);border-radius:50%;animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.conf-ico{width:80px;height:80px;background:var(--color-accent-800);color:#fff;display:flex;align-items:center;justify-content:center}
+.conf-rows{border:2px solid var(--color-neutral-800);background:#fff;padding:2px 16px}
+.conf-rows div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-neutral-200)}
+.conf-rows div:last-child{border-bottom:0}
+.conf-rows span{font-size:15px;color:var(--color-neutral-800)}.conf-rows b{font-size:16px;text-align:right}
+h2.big{font-family:var(--font-heading);font-weight:600;font-size:38px;margin:4px 0 0;line-height:1.05}
+.draft{position:relative;border:2px solid var(--color-accent-800);padding:16px;display:flex;flex-direction:column;gap:12px;background:#fff}
+.draft .n{font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.1;margin-top:2px}
+.draft .s{font-size:15px;color:var(--color-neutral-800);margin-top:2px}
+.prefix{display:flex}.prefix span{display:flex;align-items:center;padding:0 16px;background:var(--color-accent-800);color:#fff;font-family:ui-monospace,Menlo,monospace;font-size:21px;font-weight:600}
+.prefix .inp{border-left:0;font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:.15em}
+.prefix.eur span{background:var(--color-neutral-200);color:var(--color-text);border:2px solid var(--color-neutral-800);border-right:0;font-family:var(--font-body);font-size:20px}
+.prefix.eur .inp{border-left:2px solid var(--color-neutral-800);font-family:var(--font-body);letter-spacing:0;font-size:20px}
+.locked{min-height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--color-neutral-200);border:2px solid var(--color-neutral-700)}
+.locked b{font-family:ui-monospace,Menlo,monospace;font-size:21px;letter-spacing:.08em}
+.locked span{margin-left:auto;font-size:14px;color:var(--color-accent-800);font-weight:700}
+.msg-ok{color:var(--color-accent-800);font-weight:600;font-size:15px;margin-top:6px}.msg-err{color:#b3261e;font-weight:600;font-size:15px;margin-top:6px}
+.dup{border:2px solid #b3261e;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.dup p{margin:0;font-size:16px;font-weight:600;color:#7a1610}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="foto-in" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="foto-gal" accept="image/*" style="display:none">
+<script>
+/* ============================================================
+   RAPPORTINO – app per i tecnici (v0.1)
+   ============================================================ */
+const APPS = [
+  { k: 'caffe', n: 'Macchina caffè' }, { k: 'macinino', n: 'Macinino' }, { k: 'lavatazze', n: 'Lavatazze' },
+  { k: 'addolcitore', n: 'Addolcitore' }, { k: 'ghiaccio', n: 'Produttore di ghiaccio' }
+];
+const INTERVENTI = ['Installazione', 'Ritiro', 'Revisione', 'Manutenzione', 'Nessun lavoro sui macchinari'];
+const RITIRO = 'Ritiro';   // ritiro senza installazione (0.11): si compilano solo i dati del ritirato
+const NESSUN = 'Nessun lavoro sui macchinari';
+const FRASI = ['Pulizia gruppi e filtri', 'Sostituite guarnizioni', 'Decalcificazione', 'Controllo perdite'];
+const LABEL = { cliente: 'Dati cliente', apparecchi: 'Apparecchi', lavoro: 'Lavoro e pezzi', chiusura: 'Ricevuta e timbro', macchina: 'Macchina', verifiche: 'Verifiche', riepilogo: 'Riepilogo' };
+const K_AUTH = 'rapportino-accesso-v1', K_DRAFT = 'rapportino-bozza-v1', K_BOZZE = 'rapportino-bozze-v2';
+const GIORNI_BOZZA_VECCHIA = 3;
+const SAVE = ['screen', 'mode', 'data', 'torref', 'torrNome', 'ditta', 'cliente', 'ci', 'firmatario', 'intervento', 'pag', 'importo', 'fattura',
+  'localita', 'apps', 'minutes', 'altro', 'lavoro', 'pezzi', 'ricevuto', 'note', 'timbro', 'firma', 'photos',
+  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni'];
+
+const SVG = {
+  back: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  check: (s = 24, w = 2.5) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`,
+  search: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  cam: (s = 24) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`,
+  plus: (s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
+  minus: (s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>`,
+  trash: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  close: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  pen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>',
+  pin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
+};
+const CORNERS = '<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>';
+
+/* ---------- utilità ---------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const key = s => norm(s).replace(/[^a-z0-9]/g, '');
+const match = (hay, q) => { const w = norm(q).split(/\s+/).filter(Boolean); const h = norm(hay); return w.length > 0 && w.every(x => h.includes(x)); };
+// Località: nel registro alcuni nomi sono accorciati (es. «Calusco» per «Calusco d'Adda»).
+// Trova anche quando chi scrive (o il GPS) usa il nome lungo: tutte le parole del nome in elenco sono nel testo cercato.
+const parole = s => norm(s).replace(/['’`\-]/g, ' ').split(/\s+/).filter(Boolean);
+const matchLoc = (l, q) => {
+  if (match(l.n + ' ' + (l.c || ''), q.replace(/['’`]/g, ' '))) return true;
+  const pq = parole(q), pn = parole(l.n);
+  return pq.length > 1 && pn.length > 0 && pn.every(x => pq.includes(x));
+};
+// GPS: prima il nome identico, poi il nome dell'elenco più lungo con cui comincia il nome trovato.
+function locDaNome(n) {
+  if (!n) return null;
+  const k = key(n);
+  return D.localita.find(x => key(x.n) === k) ||
+    D.localita.filter(x => key(x.n).length >= 4 && k.startsWith(key(x.n))).sort((a, b) => key(b.n).length - key(a.n).length)[0] || null;
+}
+const fmt = m => { if (!m) return '—'; const h = Math.floor(m / 60), r = m % 60; if (!h) return r + "'"; return h + ' h' + (r ? ' ' + r : ''); };
+const fmtMonth = v => { if (!v) return ''; const p = v.split('-'); return p[1] + '/' + p[0]; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { } }
+};
+// La pagina funziona in due modi: dentro Apps Script (google.script.run) oppure ospitata fuori da Google
+// (GitHub Pages), dove parla con lo stesso Apps Script tramite il suo indirizzo /exec (doPost in App.gs).
+const API_URL = 'https://script.google.com/macros/s/AKfycbx54WnC-3Ua-yVn9S3rqKctnb1FQk69DPtNPEvDUcwQFdrmjRIGYBXXjqoxPf9ZOFjytQ/exec';
+const DENTRO_GOOGLE = !!(window.google && google.script && google.script.run);
+const run = (fn, ...args) => new Promise((ok, ko) => {
+  if (DENTRO_GOOGLE) { google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[fn](...args); return; }
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const tmo = setTimeout(() => ctl && ctl.abort(), 90000);
+  fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args }), signal: ctl ? ctl.signal : undefined, redirect: 'follow' })
+    .then(r => { if (!r.ok) throw new Error('Il registro non risponde (' + r.status + '). Riprova tra poco.'); return r.json(); })
+    .then(j => { clearTimeout(tmo); if (j && j.ok) ok(j.r); else ko(new Error((j && j.e) || 'Errore')); })
+    .catch(e => { clearTimeout(tmo); ko(e && e.name === 'AbortError' ? new Error('Il registro non risponde: controlla la connessione e riprova.') : (e instanceof TypeError ? new Error('Connessione assente o registro non raggiungibile: riprova.') : e)); });
+});
+const errMsg = e => String((e && e.message) || e || 'Errore').replace(/^Exception:\s*/, '');
+
+/* ---------- stato ---------- */
+let D = null;                 // dati dal registro (torrefazioni, località, clienti, …)
+let AUTH = store.get(K_AUTH); // { pin, tecnico }
+let S = initState();
+let UI = { phase: 'avvio', err: '', tecnici: [], pinTmp: '', sending: false, geo: '', dupOk: {}, confAnnulla: false, ric: null, confScarta: '' };
+
+function blankApp() { return { on: null, modello: '', matricola: '', data: '', rNone: false, rModello: '', rMatricola: '', rData: '', prefilled: false }; }
+function oggi() { return D ? D.oggi : new Date().toISOString().slice(0, 10); }
+function initState() {
+  return {
+    screen: 'inizio', mode: null, data: oggi(), editData: false,
+    torref: '', torrNome: '', ditta: '', cliente: null, locQ: '', ci: '', firmatario: '', intervento: '', pag: '', importo: '', fattura: '',
+    localita: null, locaQ: '', apps: Object.fromEntries(APPS.map(a => [a.k, blankApp()])),
+    minutes: 0, altro: false, lavoro: '', pezzi: [], sheet: false, pezzoQ: '', ricevuto: '', note: '', timbro: 'foto', firma: '', photos: {},
+    oTorref: '', oTorrNome: '', oCliente: null, oClienteQ: '', oDitta: '', oPag: '', oImporto: '', oFattura: '', oTipo: '', oMarca: '', oMatricola: '', oData: '', checks: {},
+    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: []
+  };
+}
+function set(p, rerender = true) { Object.assign(S, p); salvaBozza(); if (rerender) render(); }
+function setPath(path, val) {
+  const parts = path.split('.'); let o = S;
+  for (let i = 0; i < parts.length - 1; i++) { if (o[parts[i]] == null) o[parts[i]] = {}; o = o[parts[i]]; }
+  o[parts[parts.length - 1]] = val;
+}
+let _bozzaT = null;
+function salvaSubito() {
+  if (!S.mode || S.screen === 'conferma') return;
+  clearTimeout(_bozzaT);
+  const o = {}; SAVE.forEach(k => o[k] = S[k]); o.screen = S.screen === 'inizio' ? (S.mode === 'officina' ? 'macchina' : 'cliente') : S.screen; o.agg = Date.now(); o.tec = AUTH ? AUTH.tecnico : '';
+  const t = bozzeLocali(); t[o.uid] = o; store.set(K_BOZZE, t);
+  salvaBozzaServer(o);
+}
+function salvaBozza() {
+  if (!S.mode || S.screen === 'conferma' || S.screen === 'inizio') return;
+  clearTimeout(_bozzaT);
+  _bozzaT = setTimeout(() => {
+    const o = {}; SAVE.forEach(k => o[k] = S[k]);
+    o.agg = Date.now(); o.tec = AUTH ? AUTH.tecnico : '';
+    const tutte = bozzeLocali(); tutte[o.uid] = o; store.set(K_BOZZE, tutte);   // sul telefono (non sempre funziona, es. icona sulla Home di iPhone)
+    salvaBozzaServer(o);            // e nel registro, così la bozza non si perde mai
+    S.savedAt = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    const el = document.getElementById('saved-at'); if (el) el.textContent = 'Bozza salvata alle ' + S.savedAt;
+  }, 400);
+}
+// copia della bozza nel registro (senza anteprime delle foto e senza firma, che pesano troppo)
+let _bozzaS = null;
+function salvaBozzaServer(o) {
+  clearTimeout(_bozzaS);
+  _bozzaS = setTimeout(() => {
+    if (!AUTH || !AUTH.pin) return;
+    const c = JSON.parse(JSON.stringify(o));
+    c.firma = '';
+    if (c.photos) Object.keys(c.photos).forEach(k => { if (c.photos[k].st === 'skip') return; if (c.photos[k].st !== 'ok') delete c.photos[k]; else delete c.photos[k].thumb; });
+    run('appSalvaBozza', AUTH.pin, AUTH.tecnico, JSON.stringify(c), c.uid).catch(() => { });
+  }, 2500);
+}
+// Bozze: più rapportini non inviati insieme, ognuno con il suo uid. Non bloccano mai un rapportino nuovo.
+function bozzeLocali() {
+  const t = store.get(K_BOZZE) || {};
+  const vecchia = store.get(K_DRAFT);                     // bozza singola delle versioni precedenti
+  if (vecchia && vecchia.uid && !t[vecchia.uid]) { t[vecchia.uid] = vecchia; store.set(K_BOZZE, t); }
+  if (vecchia) store.del(K_DRAFT);
+  return t;
+}
+// bozza "vuota": iniziata e lasciata subito, senza niente di utile dentro
+function bozzaVuota(d) {
+  if (!d || !d.mode) return true;
+  const app = d.apps && Object.keys(d.apps).some(k => d.apps[k] && (d.apps[k].matricola || d.apps[k].modello));
+  return !(d.cliente || (d.pezzi && d.pezzi.length) || String(d.lavoro || '').trim() || d.oTipo || String(d.oMarca || '').trim() ||
+    d.minutes || app || (d.photos && Object.keys(d.photos).length) || d.torref || d.oTorref);
+}
+function elencoBozze() {
+  const t = bozzeLocali();
+  Object.keys(t).forEach(k => { if (bozzaVuota(t[k])) { delete t[k]; eliminaBozzaServer(k); } });
+  store.set(K_BOZZE, t);
+  // sul tablet di officina ognuno vede solo le sue bozze
+  return Object.values(t).filter(d => !(AUTH && AUTH.tablet) || !d.tec || d.tec === AUTH.tecnico).sort((a, b) => (b.agg || 0) - (a.agg || 0));
+}
+function eliminaBozzaServer(id) { if (AUTH && AUTH.pin && id) run('appSalvaBozza', AUTH.pin, AUTH.tecnico, '', id).catch(() => { }); }
+function eliminaBozza(id) {
+  const t = bozzeLocali(); delete t[id]; store.set(K_BOZZE, t);
+  if (id === S.uid) clearTimeout(_bozzaS);
+  eliminaBozzaServer(id);
+}
+// cancella la bozza del rapportino aperto (inviato, salvato in officina, ecc.)
+const clearDraft = () => { clearTimeout(_bozzaT); eliminaBozza(S.uid); };
+// unisce le bozze salvate nel registro (altro telefono, memoria del telefono svuotata) con quelle locali
+function unisciBozzeServer(lista) {
+  const t = bozzeLocali(); let cambiate = false;
+  (lista || []).forEach(b => { if (b && b.uid && (!t[b.uid] || (b.agg || 0) > (t[b.uid].agg || 0))) { t[b.uid] = b; cambiate = true; } });
+  if (cambiate) store.set(K_BOZZE, t);
+  return cambiate;
+}
+
+/* ---------- torrefazioni ---------- */
+const altreTorr = () => D.torrefazioni.filter(t => t !== D.segafredo && t !== D.privato);
+const torrName = (t, nome) => t === 'Segafredo' ? D.segafredo : t === 'Privato' ? D.privato : t === 'Altre' ? (nome || '') : '';
+const torrKind = nome => nome === D.segafredo ? 'Segafredo' : nome === D.privato ? 'Privato' : (nome ? 'Altre' : '');
+const torrLabel = (t, nome) => t === 'Segafredo' ? 'Segafredo' : t === 'Privato' ? 'Cliente privato' : t === 'Altre' ? (nome || 'Altra torrefazione') : '';
+
+/* ---------- passi ---------- */
+function verificheTipo(s = S) { return (D && D.verifiche[s.oTipo]) || []; }
+function steps(s = S) {
+  if (s.mode === 'officina') return ['macchina', 'lavoro'].concat(verificheTipo(s).length ? ['verifiche'] : [], ['riepilogo']);
+  const st = ['cliente'];
+  if (s.torref === 'Segafredo' && s.intervento && s.intervento !== NESSUN) st.push('apparecchi');
+  return st.concat(['lavoro', 'chiusura', 'riepilogo']);
+}
+const locLabel = l => !l ? '' : l.altra ? 'Altra: ' + (l.libera || '(scrivila)') : (l.c ? l.n + ' · ' + l.c : l.n);
+const cliSub = c => [c.via, [c.fraz, c.loc].filter(Boolean).join(' – ')].filter(Boolean).join(', ') || 'Indirizzo da completare';
+const ph = k => (S.photos[k] && S.photos[k].st) || 'none';
+
+/* ---------- dati mancanti ---------- */
+function missingFor(sc, s = S) {
+  const m = []; const add = (k, l) => m.push({ k, l }); const ok = k => s.carta || ph(k) === 'ok' || ph(k) === 'skip';
+  if (sc === 'cliente') {
+    if (!s.cliente) add('locale', 'locale');
+    if (!s.torref || (s.torref === 'Altre' && !s.torrNome)) add('torref', 'torrefazione');
+    if (s.torref === 'Segafredo') { if (!s.firmatario.trim()) add('firmatario', 'chi firma'); if (!s.intervento) add('intervento', 'tipo d\'intervento'); }
+    if (s.torref === 'Privato') { if (!s.pag) add('pag', 'pagamento'); if (s.pag === 'Contanti' && !s.importo) add('importo', 'importo'); if (s.pag === 'Vuole fattura' && !s.fattura.trim()) add('fattura', 'dati fattura'); }
+    if (s.torref === 'Altre' && !s.ditta) add('ditta', 'ditta');
+    if (!s.localita || (s.localita.altra && !String(s.localita.libera || '').trim())) add('localita', 'località');
+  }
+  if (sc === 'apparecchi') {
+    const inst = s.intervento === 'Installazione';
+    APPS.forEach(a => {
+      const x = s.apps[a.k], n = a.n.toLowerCase();
+      if (x.on === null) add('app_' + a.k, n + ' (sì o no)');
+      else if (x.on && s.intervento === RITIRO) {
+        if (!x.rMatricola.trim()) add('rmat_' + a.k, 'matricola ritirato ' + n);
+        if (!ok('rit_' + a.k)) add('rfoto_' + a.k, 'foto targhetta ritirato ' + n);
+      }
+      else if (x.on) {
+        if (!x.matricola.trim()) add('mat_' + a.k, 'matricola ' + n);
+        if (inst && !ok('app_' + a.k)) add('foto_' + a.k, 'foto targhetta ' + n);   // foto obbligatoria solo con installazione/ritiro (0.11)
+        if (inst && !x.rNone && !x.rMatricola.trim()) add('rmat_' + a.k, 'matricola ritirato ' + n);
+        if (inst && !x.rNone && !ok('rit_' + a.k)) add('rfoto_' + a.k, 'foto targhetta ritirato ' + n);
+      }
+    });
+  }
+  if (sc === 'lavoro') {
+    if (!s.minutes && !(s.prima > 0)) add('tempo', 'tempo di lavoro'); if (!s.lavoro.trim()) add('lavoro', 'lavoro svolto');
+  }
+  if (sc === 'chiusura') {
+    if (!s.ricevuto.trim()) add('ricevuto', 'chi ha ricevuto');
+    if (!s.carta && (s.timbro === 'foto' ? !ok('timbro') : !s.firma)) add('timbro', s.timbro === 'foto' ? 'foto del timbro' : 'firma');
+  }
+  if (sc === 'macchina') {
+    if (!s.oTorref || (s.oTorref === 'Altre' && !s.oTorrNome)) add('oTorref', 'torrefazione');
+    if (s.oTorref && s.oTorref !== 'Segafredo' && !s.oDitta) add('oDitta', 'ditta');
+    if (s.oTorref === 'Privato') { if (!s.oPag) add('oPag', 'pagamento'); if (s.oPag === 'Vuole fattura' && !s.oFattura.trim()) add('oFattura', 'dati fattura'); }
+    if (!s.oTipo) add('oTipo', 'tipo di macchinario');
+    if (!s.oMarca.trim()) add('oMarca', 'marca e modello');
+    if (!s.oMatricola.trim()) add('oMatricola', 'matricola');
+  }
+  if (sc === 'verifiche') { const ch = verificheTipo(s); if (ch.filter((_, i) => s.checks[s.oTipo + '|' + i]).length < ch.length) add('checks', 'verifiche'); }
+  return m;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const $app = document.getElementById('app');
+function render() {
+  const main = document.querySelector('.main');
+  const keepScroll = main && main.dataset.screen === S.screen ? main.scrollTop : 0;
+  let html;
+  if (UI.phase !== 'pronto') html = vistaAvvio();
+  else if (UI.sending) html = `<div class="center"><div class="spin"></div><h2 class="big">Invio in corso…</h2><p style="font-size:17px;color:var(--color-neutral-800);margin:0">Non chiudere la pagina.</p></div>`;
+  else html = vistaApp();
+  $app.innerHTML = html;
+  const m2 = document.querySelector('.main');
+  if (m2) m2.scrollTop = keepScroll;
+  initFirma();
+}
+
+function vistaAvvio() {
+  if (UI.phase === 'avvio') return `<div class="center"><div class="spin"></div><div style="font-size:18px">Caricamento…</div></div>`;
+  if (UI.phase === 'errore') return `<div class="center"><h2 class="big">Qualcosa non va</h2><div class="warn">${esc(UI.err)}</div>
+    <button class="big-btn" data-a="riprova">${CORNERS}Riprova</button></div>`;
+  if (UI.phase === 'pin') return `<div class="center"><div><div class="kicker">Rapportino d'intervento</div><h2 class="big">Codice d'accesso</h2></div>
+    <p style="margin:0;font-size:17px;color:var(--color-neutral-800)">Te lo dà l'ufficio. Si chiede solo la prima volta.</p>
+    <input class="inp" id="pin" type="tel" inputmode="numeric" autocomplete="off" placeholder="Codice" value="${esc(UI.pinTmp)}" data-b="UI.pinTmp" style="font-size:24px;letter-spacing:.2em">
+    ${UI.err ? `<div class="warn">${esc(UI.err)}</div>` : ''}
+    <button class="big-btn" data-a="accedi">${CORNERS}Entra</button></div>`;
+  if (UI.phase === 'chi' && AUTH && AUTH.tablet) return `<div class="center"><div><div class="kicker">Tablet di officina</div><h2 class="big">Chi sta lavorando?</h2></div>
+    <div class="grid1">${UI.tecnici.map(t => `<button class="opt row" data-a="tecnico" data-v="${esc(t)}" style="min-height:72px;font-size:24px">${esc(t)}</button>`).join('')}</div>
+    <p style="margin:0;color:var(--color-neutral-800)">Il lavoro e le ore vanno a chi scegli. Quando hai finito, il prossimo sceglie il suo nome.</p></div>`;
+  if (UI.phase === 'chi') return `<div class="center"><div><div class="kicker">Rapportino d'intervento</div><h2 class="big">Chi sei?</h2></div>
+    <div class="grid1">${UI.tecnici.map(t => `<button class="opt row" data-a="tecnico" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    <div><div class="lbl">${UI.tecnici.length ? 'Non sei nell\'elenco? Scrivi il tuo nome' : 'Scrivi il tuo nome'}</div>
+    <input class="inp" id="nome-tec" placeholder="Nome e cognome"></div>
+    <button class="big-btn" data-a="tecnico-libero">${CORNERS}Continua</button></div>`;
+  return '';
+}
+
+function vistaApp() {
+  const sc = S.screen, st = steps(), idx = st.indexOf(sc), isOff = S.mode === 'officina';
+  const mm = missingFor(sc); const warn = !!S.warned[sc] && mm.length > 0;
+  const bad = new Set(warn ? mm.map(x => x.k) : []);
+  QS = { miss: new Set(mm.map(x => x.k)), first: mm.length ? mm[0].k : '' };
+  let h = '';
+  if (idx >= 0) {
+    h += `<div class="hdr"><div class="hdr-row">
+      <button class="ico-btn" data-a="indietro" aria-label="Indietro">${SVG.back}</button>
+      <div style="flex:1;min-width:0"><div class="kicker">${isOff ? 'Lavoro di officina' : 'Dal cliente · ' + esc(torrLabel(S.torref, S.torrNome) || '—')}</div>
+      <div class="h-title">${LABEL[sc] || ''}</div></div>
+      <div class="h-step">${idx + 1}/${st.length}</div>
+      <button class="aiuto-btn" data-a="aiuto" aria-label="Aiuto">?</button></div>
+      <div class="segs">${st.map((_, i) => `<div class="${i <= idx ? 'on' : ''}"></div>`).join('')}</div>
+      <div class="saved" id="saved-at">${S.savedAt ? 'Bozza salvata alle ' + S.savedAt : ''}</div></div>`;
+  }
+  h += `<div class="main" data-screen="${sc}">`;
+  const V = { inizio: vInizio, cliente: vCliente, apparecchi: vApparecchi, lavoro: vLavoro, chiusura: vChiusura, macchina: vMacchina, verifiche: vVerifiche, riepilogo: vRiepilogo, conferma: vConferma, furgone: vFurgone };
+  h += (V[sc] || vInizio)(bad);
+  h += `</div>`;
+  if (idx >= 0) h += vFooter(sc, warn);
+  if (S.sheet) h += vSheet();
+  if (UI.aiuto) h += vAiuto();
+  if (UI.firma) h += vFirmaGrande();
+  return h;
+}
+
+/* ---------- Inizio ---------- */
+// Nei giorni di chiusura (Segafredo il 25, gli altri a fine mese) l'avviso compare solo a chi ha rapportini non inviati.
+function avvisoChiusura() {
+  const t = new Date(oggi() + 'T12:00:00'), g = t.getDate(), ultimo = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+  let msg = '';
+  if (g >= 22 && g <= 25) msg = 'Il 25 si chiude il mese Segafredo: invia i rapportini non inviati, altrimenti restano fuori dalla proforma.';
+  else if (g >= ultimo - 3 || g <= 2) msg = 'Si chiude il mese: invia i rapportini non inviati, altrimenti restano fuori dalle proforma.';
+  return msg ? `<div style="background:#b42318;color:#fff;border-radius:8px;padding:14px 16px;font-size:18px;font-weight:700;line-height:1.35">⚠ ${msg}</div>` : '';
+}
+function vInizio() {
+  const dt = new Date(S.data + 'T12:00:00');
+  let dl = dt.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }); dl = dl.charAt(0).toUpperCase() + dl.slice(1);
+  const bz = S.drafts || [];
+  const dTitle = d => d.mode === 'officina' ? 'Officina · ' + [d.oTipo, d.oMarca].filter(Boolean).join(' ') || 'Officina · macchina' : (d.cliente ? d.cliente.nome : 'Rapportino dal cliente');
+  const giorni = d => Math.floor((Date.now() - (d.agg || Date.now())) / 86400000);
+  return `<div class="pad" style="padding-top:32px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="kicker">${AUTH.tablet ? 'Tablet di officina · ' : 'Nuovo rapportino · '}${esc(AUTH.tecnico)}</div><h2 class="big">${AUTH.tablet ? 'Lavoro di officina' : 'Dove hai lavorato?'}</h2></div>
+      <button class="aiuto-btn" data-a="aiuto" aria-label="Aiuto">?</button></div>
+    <div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px">
+      <div style="font-size:18px;font-weight:600">${S.data === oggi() ? 'Oggi, ' : ''}${esc(dl)}</div>
+      <button class="link" data-a="toggle-data">Cambia data</button></div>
+      ${S.editData ? `<input class="inp" type="date" value="${esc(S.data)}" max="${esc(oggi())}" data-a-change="data" style="margin-top:8px">` : ''}
+      ${S.data !== oggi() ? `<button class="opt row ${S.carta ? 'on' : ''}" data-a="carta" style="margin-top:8px"><span>Sto ricopiando un bollettino di carta<br><small style="font-weight:400">le foto diventano facoltative</small></span>${S.carta ? SVG.check() : ''}</button>` : ''}</div>
+    ${bz.length ? avvisoChiusura() : ''}
+    ${bz.length ? `<div style="display:flex;flex-direction:column;gap:10px"><div class="lbl" style="margin:0;color:#b42318">Rapportini non inviati (${bz.length})</div>
+      ${bz.map(d => { const vecchia = giorni(d) >= GIORNI_BOZZA_VECCHIA; return `<div class="draft"${vecchia ? ' style="border-color:#b42318;background:#fdecec"' : ''}>${CORNERS}<div>
+        <div class="kicker"${vecchia ? ' style="color:#b42318"' : ''}>${vecchia ? 'Da ' + giorni(d) + ' giorni: non è fatturato finché non lo invii' : 'Da finire'}</div><div class="n">${esc(dTitle(d))}</div>
+        <div class="s">${d.data ? esc(dIt(d.data)) + ' · ' : ''}fermo a: ${esc((LABEL[d.screen] || 'inizio').toLowerCase())}</div></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px"><button class="opt on" data-a="riprendi" data-v="${esc(d.uid)}">Riprendi</button><button class="opt" data-a="scarta" data-v="${esc(d.uid)}">${UI.confScarta === d.uid ? 'Sicuro?' : 'Elimina'}</button></div></div>`; }).join('')}</div>` : ''}
+    ${vInCorso()}
+    <div class="grid1" style="gap:16px">
+      ${AUTH.tablet ? '' : `<button class="choice blueprint" data-a="start" data-v="cliente">${CORNERS}<b>Dal cliente</b><span>Bar, ristorante o privato.</span></button>`}
+      <button class="choice blueprint" data-a="start" data-v="officina">${CORNERS}<b>${AUTH.tablet ? 'Nuova macchina' : 'Lavoro di officina'}</b><span>Una scheda per ogni macchina. Se non la finisci, la salvi e la riprende chiunque.</span></button>
+    </div>
+    ${AUTH.tablet ? '' : `<button class="big-btn sec2" data-a="furgone">Da rimettere sul furgone${D && D.furgone ? ` (${D.furgone})` : ''}</button>`}
+    ${AUTH.tablet ? `<button class="big-btn sec2" data-a="cambia-tecnico">Non sei ${esc(AUTH.tecnico)}? Cambia</button>` : ''}
+  </div>`;
+}
+
+/* ---------- da rimettere sul furgone ---------- */
+function vFurgone() {
+  const R = UI.ric || {};
+  let h = `<div class="pad" style="padding-top:20px">
+    <div style="display:flex;align-items:center;gap:8px"><button class="ico-btn" data-a="ric-chiudi" aria-label="Indietro">${SVG.back}</button>
+      <div><div class="kicker">${esc(AUTH.tecnico)}</div><h2 class="big" style="margin:0">Da rimettere sul furgone</h2></div></div>
+    <div style="font-size:15px;color:var(--color-neutral-800)">I pezzi che hai montato dai clienti e non hai ancora ricaricato, più quelli aggiunti a mano. Quando li rimetti sul furgone, segnali: spariscono dalla lista.</div>`;
+  if (R.carico) return h + `<div class="center" style="min-height:200px"><div class="spin"></div></div></div>`;
+  if (R.err) return h + `<div class="warn">${esc(R.err)}</div><button class="big-btn sec2" data-a="furgone">Riprova</button></div>`;
+  const P = R.pezzi || [];
+  if (!P.length) return h + `<div class="empty">Niente da ricaricare: il furgone è a posto.</div>${fgManuale()}</div>`;
+  h += `<div class="grid1" style="gap:8px">${P.map((p, i) => `<div class="pezzo" style="align-items:center;gap:8px">
+      <div class="n">${esc(p.n)}<br><small style="font-weight:400;color:var(--color-neutral-800)">${esc(p.dove.join(', '))}${p.dal ? ' · dal ' + esc(p.dal) : ''}</small></div>
+      <div class="q" style="font-size:22px;min-width:44px;text-align:center">× ${p.q}</div>
+      ${p.q > 1 ? `<button class="btn2" data-a="carica-uno" data-v="${i}">1</button>` : ''}
+      <button class="btn2" data-a="carica-tutti" data-v="${i}" style="font-weight:700">${p.q > 1 ? 'Tutti' : 'Caricato'}</button></div>`).join('')}</div>`;
+  return h + fgManuale() + `</div>`;
+}
+// aggiunta a mano (promemoria)
+function fgManuale() {
+  return `<div class="card" style="margin-top:16px;padding:14px;border:1px dashed var(--color-neutral-400);border-radius:12px">
+    <div class="kicker" style="margin-bottom:8px">Aggiungi a mano</div>
+    <div class="lbl" style="font-size:15px">Pezzo (con la quantità se più di uno: «2 guarnizioni»)</div>
+    <input class="inp" id="fg-nome" value="${esc(UI.fgNome || '')}" data-b="UI.fgNome" autocomplete="off">
+    <div class="lbl" style="font-size:15px;margin-top:8px">Per chi o perché <span>(facoltativo)</span></div>
+    <input class="inp" id="fg-nota" value="${esc(UI.fgNota || '')}" data-b="UI.fgNota" autocomplete="off">
+    <button class="big-btn sec2" data-a="fg-aggiungi" style="margin-top:10px"${UI.fgInvio ? ' disabled' : ''}>${UI.fgInvio ? 'Salvo…' : 'Aggiungi alla lista'}</button></div>`;
+}
+
+function caricato(i, quanti) {
+  const p = ((UI.ric || {}).pezzi || [])[i]; if (!p) return;
+  // aggiorno subito la lista sul telefono, poi il registro
+  if (quanti > 0 && p.q > quanti) p.q -= quanti; else UI.ric.pezzi.splice(i, 1);
+  if (D) D.furgone = UI.ric.pezzi.reduce((a, b) => a + b.q, 0);
+  render();
+  run('appCaricato', AUTH.pin, AUTH.tecnico, p.k, quanti)
+    .then(r => { if (S.screen === 'furgone') { UI.ric = r; render(); } })
+    .catch(e => { alertBreve('Non salvato: ' + errMsg(e) + '. Riapri la lista e riprova.'); });
+}
+
+/* ---------- officina: lavori in corso ---------- */
+const dIt = d => d ? String(d).slice(0, 10).split('-').reverse().join('/').slice(0, 5) : '';
+function sessTxt(ss) { return (ss || []).map(x => `${dIt(x.d)} ${x.t} ${fmt(x.m)}`).join(' · '); }
+function vInCorso() {
+  const L = (D && D.lavori) || [];
+  if (!L.length) return '';
+  return `<div><div class="kicker" style="margin-bottom:8px">In corso in officina (${L.length})</div><div class="grid1" style="gap:8px">${L.map(l =>
+    `<button class="opt row" data-a="apri-lavoro" data-v="${esc(l.id)}" style="text-align:left"><span><b>${esc(l.titolo)}</b><br><small style="font-weight:400">${esc(l.sub)}</small></span></button>`).join('')}</div></div>`;
+}
+
+/* ---------- campi comuni ---------- */
+const opt = (on, a, v, l, cls = '') => `<button class="opt ${cls} ${on ? 'on' : ''}" data-a="${a}" data-v="${esc(v)}">${esc(l)}</button>`;
+let QS = { miss: new Set(), first: '' };   // domande mancanti della schermata (calcolate in vistaApp)
+const qCls = k => QS.miss.has(k) ? (k === QS.first ? 'q next' : 'q todo') : 'q';
+const blk = (bad, k, inner) => `<div id="q-${k}" class="${qCls(k)} ${bad.has(k) ? 'bad' : ''}">${inner}</div>`;
+// riquadro chiuso per i campi facoltativi
+const facolt = (id, titolo, inner, aperto) => (aperto || S.expanded['f_' + id])
+  ? `<div class="facolt"><button data-a="espandi" data-v="f_${id}"><span>${titolo}</span><span>▲</span></button><div>${inner}</div></div>`
+  : `<div class="facolt"><button data-a="espandi" data-v="f_${id}"><span>${titolo}</span><span>▼</span></button></div>`;
+function vTorref(bad, kBad, t, nome, aT, aN, nota = '') {
+  let h = `<div class="lbl">Torrefazione</div><div class="grid1">` +
+    [['Segafredo', 'Segafredo'], ['Privato', 'Cliente privato'], ['Altre', 'Altra torrefazione']].map(([k, l]) =>
+      `<button class="opt row ${t === k ? 'on' : ''}" data-a="${aT}" data-v="${k}"><span>${esc(k === 'Altre' && t === 'Altre' && nome ? nome : l)}</span>${t === k ? SVG.check() : ''}</button>`).join('') + `</div>`;
+  if (t === 'Altre') h += `<div class="grid2" style="margin-top:8px">${altreTorr().map(x => opt(nome === x, aN, x, x, 'sm')).join('')}</div>`;
+  if (nota) h += `<div class="info" style="margin-top:8px">${nota}</div>`;
+  return blk(bad, kBad, h);
+}
+function vFoto(key, label, big) {
+  const p = S.photos[key];
+  const salta = /^(app|rit)_/.test(key);   // solo le targhette: il timbro ha già l'alternativa della firma
+  const altre = `<div class="foto-alt"><button class="link" data-a="foto-gal" data-v="${key}">Scegli dalla galleria</button>${salta ? `<button class="link" data-a="foto-salta" data-v="${key}">La foto non funziona</button>` : ''}</div>`;
+  if (!p || p.st === 'none') return `<button class="foto-btn ${big ? 'big' : ''}" data-a="foto" data-v="${key}">${SVG.cam(big ? 40 : 24)}${esc(label)}</button>${altre}`;
+  if (p.st === 'skip') return `<div class="foto-ok"><div class="ph"></div><div class="m err">Foto non fatta: segnalata all'ufficio</div>
+    <button class="btn2" data-a="foto" data-v="${key}">Riprova</button></div>`;
+  if (p.st === 'err') return `<div class="foto-ok">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="ph"></div>'}<div class="m err">Non caricata: tocca Rifai</div>
+    <button class="btn2" data-a="foto" data-v="${key}">Rifai</button></div>${altre}`;
+  const msg = p.st === 'up' ? 'Caricamento…' : p.st === 'err' ? 'Non caricata: tocca Rifai' : 'Foto caricata';
+  return `<div class="foto-ok">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="ph"></div>'}<div class="m ${p.st === 'err' ? 'err' : ''}">${msg}</div>
+    <button class="btn2" data-a="foto" data-v="${key}">Rifai</button></div>`;
+}
+function vPagamento(bad, pre, pag, importo, fattura) {
+  return `${blk(bad, pre ? 'oPag' : 'pag', `<div class="lbl">Pagamento</div><div class="grid2">${['Contanti', 'Vuole fattura'].map(l => opt(pag === l, pre ? 'opag' : 'pag', l, l)).join('')}</div>`)}
+    ${blk(bad, 'importo', `<div class="lbl">Importo incassato ${pag === 'Vuole fattura' ? '<span>(se ha pagato)</span>' : ''}</div><div class="prefix eur"><span>€</span>
+      <input class="inp" type="text" inputmode="decimal" value="${esc(importo)}" data-b="${pre ? 'oImporto' : 'importo'}" data-f="importo"></div>`)}
+    ${pag === 'Vuole fattura' ? blk(bad, pre ? 'oFattura' : 'fattura', `<div class="lbl">Dati per la fattura <span>(nome o ragione sociale, codice fiscale o P.IVA, indirizzo, codice SDI o PEC)</span></div>
+      <textarea class="ta" data-b="${pre ? 'oFattura' : 'fattura'}">${esc(fattura)}</textarea>`) : ''}`;
+}
+
+/* ---------- Dati cliente ---------- */
+function vCliente(bad) {
+  const c = S.cliente;
+  let locale;
+  if (c) {
+    locale = `<div class="sel-box"><div class="t"><div class="n">${esc(c.nome)}</div><div class="s">${c.nuovo ? 'Nuovo locale: verrà aggiunto all\'elenco' : esc(cliSub(c))}</div></div>
+      <button class="btn2" data-a="cliente-via">Cambia</button></div>`;
+    if (c.nuovo) {
+      locale += `<div style="margin-top:12px"><div class="lbl">Via e numero <span>(serve a distinguerlo da locali con lo stesso nome)</span></div>
+        <input class="inp" value="${esc(c.via || '')}" data-b="cliente.via">
+        <button class="btn2 acc" data-a="posizione" style="margin-top:8px;display:flex;gap:8px;align-items:center">${SVG.pin}Usa la mia posizione</button>
+        <div id="geo-msg">${UI.geo}</div></div>`;
+      const dup = possibileDoppione();
+      if (dup) locale += key(dup.nome) === key(c.nome)
+        ? `<div class="dup" style="margin-top:12px"><p>Esiste già «${esc(dup.nome)}» – ${esc(cliSub(dup))}. È lui?</p>
+        <div class="grid2"><button class="opt on sm" data-a="dup-si" data-v="${esc(dup.id)}">Sì, è lui</button><button class="opt sm" data-a="dup-no" data-v="${esc(dup.id)}">No, è un altro</button></div></div>`
+        : `<div class="dup" style="margin-top:12px"><p>Allo stesso indirizzo c'era «${esc(dup.nome)}». È lo stesso locale con un nome nuovo?</p>
+        <div class="grid2"><button class="opt on sm" data-a="dup-rinomina" data-v="${esc(dup.id)}">Sì, ha cambiato nome</button><button class="opt sm" data-a="dup-no" data-v="${esc(dup.id)}">No, è un altro</button></div></div>`;
+    }
+  } else {
+    locale = `<div class="search"><input class="inp" id="q-cli" value="${esc(S.locQ)}" placeholder="Cerca per nome, via o paese" data-b="locQ" data-p="suggCli" autocomplete="off">${SVG.search}</div>
+      <div id="p-suggCli">${pSuggCli()}</div>`;
+  }
+  let h = `<div class="pad">`;
+  h += blk(bad, 'locale', `<div class="lbl">Locale</div>${locale}`);
+  const daArch = c && !c.nuovo && c.torr && torrName(S.torref, S.torrNome) === c.torr;
+  h += vTorref(bad, 'torref', S.torref, S.torrNome, 'torref', 'torr-nome',
+    daArch ? `Preselezionata: ultima volta questo locale era con <b>${esc(c.torr)}</b>${c.visita ? ' (' + esc(c.visita) + ')' : ''}. Se ha cambiato torrefazione, tocca quella giusta.` : '');
+  if (S.torref === 'Segafredo') {
+    const locked = c && !c.nuovo && !S.ciSblocca && /^CI\d{6}$/.test(c.ci || '');
+    h += locked ? `<div><div class="lbl">Codice cliente Segafredo</div><div class="locked"><b>${esc(c.ci)}</b><span>${SVG.check(18)} Dall'elenco</span><button class="btn2" style="min-height:40px" data-a="ci-cambia">Cambia</button></div></div>`
+      : facolt('ci', 'Codice cliente Segafredo <b>(facoltativo)</b>' + (S.ci ? ': CI' + esc(S.ci) : ''),
+        `<div class="prefix"><span>CI</span><input class="inp" type="tel" inputmode="numeric" value="${esc(S.ci)}" data-b="ci" data-f="cifre" data-p="ciMsg"></div>
+        <div id="p-ciMsg">${pCiMsg()}</div>`, !!S.ci || S.ciSblocca);
+    h += blk(bad, 'firmatario', `<div class="lbl">Nome di chi firma</div><input class="inp" value="${esc(S.firmatario)}" data-b="firmatario">`);
+    h += blk(bad, 'intervento', `<div class="lbl">Tipo d'intervento</div><div class="grid2">${INTERVENTI.map(l => opt(S.intervento === l, 'intervento', l, l, 'tall')).join('')}</div>`);
+  }
+  if (S.torref === 'Privato') h += vPagamento(bad, false, S.pag, S.importo, S.fattura);
+  if (S.torref === 'Altre') h += blk(bad, 'ditta', `<div class="lbl">Ditta</div><div class="grid3">${D.ditte.map(l => opt(S.ditta === l, 'ditta', l, l)).join('')}</div>`);
+  let loc;
+  if (S.localita && !S.localita.altra) loc = `<div class="sel-box"><div class="t" style="font-size:18px;font-weight:600">${esc(locLabel(S.localita))}</div><button class="btn2" data-a="loc-via">Cambia</button></div>`;
+  else if (S.localita && S.localita.altra) loc = `<div class="sel-box"><div class="t" style="font-size:18px;font-weight:600">Località non in elenco</div><button class="btn2" data-a="loc-via">Cambia</button></div>
+    <div class="lbl" style="margin-top:10px;font-size:15px">Scrivi il paese o la frazione</div><input class="inp" value="${esc(S.localita.libera || '')}" data-b="localita.libera">
+    <div class="hint">L'ufficio controllerà la tariffa di chiamata.</div>`;
+  else loc = `<input class="inp" value="${esc(S.locaQ)}" placeholder="Cerca il paese" data-b="locaQ" data-p="suggLoc" autocomplete="off">
+    <div id="p-suggLoc">${pSuggLoc()}</div><div class="hint">Puoi cercare anche la frazione.</div>`;
+  h += blk(bad, 'localita', `<div class="lbl">Località</div>${loc}`);
+  return h + `</div>`;
+}
+function pSuggCli() {
+  if (!S.locQ.trim()) return '';
+  const res = D.clienti.filter(c => match([c.nome, c.via, c.loc, c.fraz, c.ex, c.ci].join(' '), S.locQ))
+    .sort((a, b) => (norm(b.nome).startsWith(norm(S.locQ)) ? 1 : 0) - (norm(a.nome).startsWith(norm(S.locQ)) ? 1 : 0)).slice(0, 6);
+  return `<div class="sugg">${res.map(c => `<button data-a="scegli-cliente" data-v="${esc(c.id)}"><span class="sn"><b>${esc(c.nome)}</b><small>${esc(cliSub(c))}</small></span>
+    <span class="code">${esc(c.ci || '')}</span></button>`).join('')}
+    <button class="new" data-a="nuovo-cliente">+ Nuovo locale «${esc(S.locQ.trim())}»</button></div>`;
+}
+function pCiMsg() {
+  const ok = /^\d{6}$/.test(S.ci);
+  return `<div class="${ok ? 'msg-ok' : S.ci ? 'msg-err' : 'hint'}">${ok ? 'Codice completo' : S.ci ? `Servono 6 cifre (${S.ci.length}/6)` : 'Le 6 cifre dopo «CI». Se non lo sai lascia vuoto: lo completa l\'ufficio.'}</div>`;
+}
+function pSuggLoc() {
+  if (!S.locaQ.trim()) return '';
+  const res = D.localita.filter(l => matchLoc(l, S.locaQ)).slice(0, 7);
+  return `<div class="sugg">${res.map(l => `<button data-a="scegli-loc" data-v="${esc(l.n)}"><span class="sn"><b>${esc(l.n)}</b><small>${l.c ? 'Frazione di ' + esc(l.c) : 'Comune'}</small></span></button>`).join('')}
+    ${res.length ? '' : '<div class="none">Nessun comune o frazione trovato</div>'}
+    <button class="new" data-a="loc-altra">Non la trovo: scrivila a mano</button></div>`;
+}
+function possibileDoppione() {
+  const c = S.cliente; if (!c || !c.nuovo || !S.localita || S.localita.altra) return null;
+  const stessaVia = x => c.via && x.via && key(x.via) === key(c.via);
+  return D.clienti.find(x => key(x.loc) === key(S.localita.n) && (key(x.nome) === key(c.nome) || stessaVia(x)) && !UI.dupOk[x.id]) || null;
+}
+
+/* ---------- Apparecchi (Segafredo) ---------- */
+function vApparecchi(bad) {
+  const inst = S.intervento === 'Installazione', rit = S.intervento === RITIRO;
+  let h = `<div class="pad" style="gap:12px;padding-top:20px"><p style="margin:0 0 4px;font-size:17px;color:var(--color-neutral-800)">${rit ? 'Cosa hai ritirato? Rispondi per tutti e cinque.' : 'Ci hai lavorato? ' + (inst ? 'Con l\'installazione indica sia l\'apparecchio installato sia quello ritirato.' : 'Rispondi per tutti e cinque.')}</p>`;
+  APPS.forEach(a => {
+    const x = S.apps[a.k], k = a.k, on = x.on === true, no = x.on === false;
+    if (rit) {
+      h += `<div id="q-app_${k}" class="card ${bad.has('app_' + k) ? 'bad' : on ? 'on' : ''}${QS.first === 'app_' + k ? ' q next' : ''}"><div class="card-h"><div class="card-t">${a.n}</div>
+        <div class="grid2"><button class="opt tall ${no ? 'on' : ''}" data-a="app-on" data-v="${k}|0">No</button><button class="opt tall ${on ? 'on' : ''}" data-a="app-on" data-v="${k}|1">Ritirato</button></div></div>`;
+      if (on) h += `<div class="card-b">${x.prefilled ? '<div class="info">Dati dall\'ultimo intervento. Controlla che corrispondano alla targhetta.</div>' : ''}
+        <div><div class="lbl">Tipo / modello ritirato</div><input class="inp" value="${esc(x.rModello)}" data-b="apps.${k}.rModello"></div>
+        <div class="split"><div id="q-rmat_${k}" class="${qCls('rmat_' + k)} ${bad.has('rmat_' + k) ? 'bad' : ''}"><div class="lbl">Matricola</div><input class="inp mono" value="${esc(x.rMatricola)}" data-b="apps.${k}.rMatricola"></div>
+          <div><div class="lbl">Data targhetta</div><input class="inp month" type="month" value="${esc(x.rData)}" data-b="apps.${k}.rData"></div></div>
+        <div id="q-rfoto_${k}" class="${qCls('rfoto_' + k)} ${bad.has('rfoto_' + k) ? 'bad' : ''}">${vFoto('rit_' + k, 'Fotografa la targhetta')}</div></div>`;
+      h += `</div>`;
+      return;
+    }
+    h += `<div id="q-app_${k}" class="card ${bad.has('app_' + k) ? 'bad' : on ? 'on' : ''}${QS.first === 'app_' + k ? ' q next' : ''}"><div class="card-h"><div class="card-t">${a.n}</div>
+      <div class="grid2"><button class="opt tall ${no ? 'on' : ''}" data-a="app-on" data-v="${k}|0">No</button><button class="opt tall ${on ? 'on' : ''}" data-a="app-on" data-v="${k}|1">Sì</button></div></div>`;
+    if (on) {
+      h += `<div class="card-b">${x.prefilled ? '<div class="info">Dati dall\'ultimo intervento. Controlla che corrispondano alla targhetta.</div>' : ''}
+        ${inst ? '<div class="sub-t">Installato</div>' : ''}
+        <div><div class="lbl">Tipo / modello</div><input class="inp" value="${esc(x.modello)}" data-b="apps.${k}.modello"></div>
+        <div class="split"><div id="q-mat_${k}" class="${qCls('mat_' + k)} ${bad.has('mat_' + k) ? 'bad' : ''}"><div class="lbl">Matricola</div><input class="inp mono" value="${esc(x.matricola)}" data-b="apps.${k}.matricola"></div>
+          <div><div class="lbl">Data targhetta</div><input class="inp month" type="month" value="${esc(x.data)}" data-b="apps.${k}.data"></div></div>
+        <div id="q-foto_${k}" class="${qCls('foto_' + k)} ${bad.has('foto_' + k) ? 'bad' : ''}">${vFoto('app_' + k, inst ? 'Fotografa la targhetta' : 'Foto targhetta (facoltativa)')}</div>`;
+      if (inst) {
+        h += `<div style="display:flex;flex-direction:column;gap:16px;border-top:1px solid var(--color-neutral-300);padding-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div class="sub-t">Ritirato</div>
+          <button class="btn2 ${x.rNone ? '' : ''}" style="${x.rNone ? 'background:var(--color-accent-800);color:#fff;border-color:var(--color-accent-800)' : ''}" data-a="rit-none" data-v="${k}">Nessuno ritirato</button></div>`;
+        if (!x.rNone) h += `<div><div class="lbl">Tipo / modello ritirato</div><input class="inp" value="${esc(x.rModello)}" data-b="apps.${k}.rModello"></div>
+          <div class="lbl" style="margin-bottom:-8px">Matricola e data del ritirato</div>
+          <div class="split"><input class="inp mono ${bad.has('rmat_' + k) ? 'bad' : ''}" value="${esc(x.rMatricola)}" data-b="apps.${k}.rMatricola">
+          <input class="inp month" type="month" value="${esc(x.rData)}" data-b="apps.${k}.rData"></div>
+          <div id="q-rfoto_${k}" class="${qCls('rfoto_' + k)} ${bad.has('rfoto_' + k) ? 'bad' : ''}">${vFoto('rit_' + k, 'Fotografa la targhetta del ritirato')}</div>`;
+        h += `</div>`;
+      }
+      h += `</div>`;
+    }
+    h += `</div>`;
+  });
+  return h + `</div>`;
+}
+
+/* ---------- Lavoro e pezzi ---------- */
+function vLavoro(bad) {
+  const isOff = S.mode === 'officina', max = (isOff ? D.oreMaxOfficina : D.oreMaxCliente) * 60;
+  const quick = isOff ? [30, 60, 90, 120, 180, 240, 360, 480] : [15, 30, 45, 60, 90, 120, 180, 240];
+  const custom = S.altro || (S.minutes > 0 && !quick.includes(S.minutes));
+  let h = `<div class="pad">`;
+  if (isOff && S.lavoroId) h += `<div class="info">Lavoro iniziato prima: finora <b>${fmt(S.prima)}</b>${S.sessioni.length ? ' (' + esc(sessTxt(S.sessioni)) + ')' : ''}.<br>Qui sotto segna solo il tempo di <b>oggi</b>; nel lavoro svolto aggiungi cosa hai fatto tu.</div>`;
+  h += blk(bad, 'tempo', `<div style="display:flex;justify-content:space-between;align-items:baseline" class="lbl"><div>${isOff && S.lavoroId ? 'Tempo di lavoro di oggi' : 'Tempo di lavoro'}</div><span style="font-size:14px">massimo ${fmt(max)}</span></div>
+    <div class="grid4">${quick.map(m => opt(!custom && S.minutes === m, 'tempo', m, fmt(m))).join('')}${opt(custom, 'tempo-altro', '', 'Altro')}</div>
+    ${custom ? `<div class="stepper"><button class="qbtn" style="width:56px;height:56px" data-a="tempo-dec" aria-label="Meno 15 minuti">${SVG.minus(26)}</button>
+      <div class="v">${S.minutes ? fmt(S.minutes) : '0 h'}</div><button class="qbtn" style="width:56px;height:56px" data-a="tempo-inc" aria-label="Più 15 minuti">${SVG.plus(26)}</button></div>` : ''}`);
+  h += blk(bad, 'lavoro', `<div class="lbl">Lavoro svolto</div><textarea class="ta" id="ta-lavoro" data-b="lavoro">${esc(S.lavoro)}</textarea>
+    <div class="chips">${FRASI.map(f => `<button class="chip" data-a="frase" data-v="${esc(f)}">+ ${esc(f)}</button>`).join('')}</div>`);
+  const ul = !isOff && S.cliente && S.cliente.ultimi ? S.cliente.ultimi : null;
+  const qOf = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; };
+  const ultimi = ul ? ul.pezzi.filter(p => qOf(p.n) < p.q) : [];
+  h += `<div><div class="lbl">Pezzi sostituiti</div>`;
+  if (ultimi.length) h += `<div style="border:2px solid var(--color-accent-800);padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:15px;font-weight:700;color:var(--color-accent-800)">Ultima volta in questo locale (${esc(ul.data.split('-').reverse().join('/'))})</div>
+    <div class="chips" style="margin:0">${ultimi.map((p, i) => `<button class="chip" data-a="ultimo" data-v="${i}">+ ${esc(p.n)} ×${p.q}</button>`).join('')}</div>
+    <button class="link" data-a="ultimi-tutti" style="align-self:flex-start">Aggiungi tutti</button></div>`;
+  if (!S.pezzi.length) h += `<div class="empty">Nessun pezzo. Se non hai cambiato niente, lascia vuoto.</div>`;
+  h += `<div class="grid1" style="gap:6px">${S.pezzi.map((p, i) => `<div class="pezzo"><div class="n">${esc(p.n)}</div>
+    <button class="qbtn" data-a="pz-dec" data-v="${i}" aria-label="Togli uno">${p.q === 1 ? SVG.trash : SVG.minus()}</button>
+    <div class="q">${p.q}</div><button class="qbtn" data-a="pz-inc" data-v="${i}" aria-label="Aggiungi uno">${SVG.plus()}</button></div>`).join('')}</div>
+    <button class="big-btn sec2" data-a="apri-pezzi" style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">${SVG.plus(24)}Aggiungi pezzo</button></div>`;
+  if (isOff) h += facolt('note', 'Note per l\'ufficio <b>(facoltative)</b>', `<textarea class="ta" style="min-height:96px" data-b="note">${esc(S.note)}</textarea>`, !!S.note);
+  if (isOff) {
+    h += `<div style="border-top:2px solid var(--color-neutral-300,#ddd);padding-top:16px;display:flex;flex-direction:column;gap:10px">
+      <div class="lbl" style="margin:0">Non hai finito la macchina?</div>
+      <button class="big-btn sec2" data-a="interrompi">Interrompi e salva</button>
+      <div style="font-size:15px;color:var(--color-neutral-800)">Resta in "In corso in officina": la riprendi tu o un collega, anche un altro giorno. Il tempo di oggi viene sommato.</div>`;
+    if (S.lavoroId) h += `<button class="link" data-a="annulla-lavoro" style="align-self:flex-start;color:#b42318">${UI.confAnnulla ? 'Tocca di nuovo per confermare: il lavoro in corso viene eliminato' : 'Elimina questo lavoro in corso'}</button>`;
+    h += `</div>`;
+  }
+  return h + `</div>`;
+}
+// Aiuto "?": testi della schermata in cui si è (scheda "Aiuto app" del registro) + WhatsApp / chiamata
+function vAiuto() {
+  const sc = UI.aiuto;
+  const A0 = (D && D.aiuto) || { numero: '', voci: [] };
+  const qui = A0.voci.filter(v => v.s === sc);
+  const cosa = qui.find(v => /^cosa fare qui$/i.test(v.d));
+  const faq = qui.filter(v => v !== cosa).concat(A0.voci.filter(v => v.s === 'tutte'));
+  const nome = sc === 'inizio' ? 'Prima schermata' : sc === 'furgone' ? 'Da rimettere sul furgone' : (LABEL[sc] || sc);
+  const chi = S.mode === 'officina' ? [S.oTipo, S.oMarca].filter(Boolean).join(' ') : (S.cliente ? S.cliente.nome : '');
+  const msg = `Ciao, sono ${AUTH.tecnico}. Sono bloccato nell'app su: ${nome}${chi ? ' (rapportino ' + chi + ')' : ''}. Il problema è: `;
+  const num = String(A0.numero || '').replace(/\D/g, '');
+  return `<div class="overlay"><div style="flex:1;min-height:40px" data-a="chiudi-aiuto"></div><div class="sheet">
+    <div class="sheet-h"><div>Aiuto · ${esc(nome)}</div><button class="ico-btn" data-a="chiudi-aiuto" aria-label="Chiudi">${SVG.close}</button></div>
+    <div class="sheet-l">
+      ${cosa ? `<p class="aiuto-cosa">${esc(cosa.r)}</p>` : ''}
+      ${faq.map(v => `<details class="aiuto-q"><summary>${esc(v.d)}</summary><p>${esc(v.r)}</p></details>`).join('')}
+      ${num ? `<div class="lbl" style="margin-top:16px">Non hai trovato la risposta?</div>
+      <div class="grid1" style="gap:10px">
+        <a class="big-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center" href="https://wa.me/39${num}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${CORNERS}WhatsApp a Stefano</a>
+        <a class="big-btn sec2" style="text-decoration:none;display:flex;align-items:center;justify-content:center" href="tel:+39${num}">Chiama</a></div>` : ''}
+    </div></div></div>`;
+}
+
+function vSheet() {
+  return `<div class="overlay"><div style="flex:1;min-height:60px" data-a="chiudi-pezzi"></div><div class="sheet">
+    <div class="sheet-h"><div>Aggiungi pezzo</div><button class="ico-btn" data-a="chiudi-pezzi" aria-label="Chiudi">${SVG.close}</button></div>
+    <div style="padding:0 16px 12px" class="search"><input class="inp" id="q-pezzo" value="${esc(S.pezzoQ)}" placeholder="Cerca o scrivi il pezzo" data-b="pezzoQ" data-p="listaPezzi" autocomplete="off">
+      <span style="position:absolute;left:32px;top:17px;color:var(--color-neutral-800)">${SVG.search}</span></div>
+    <div class="sheet-l" id="p-listaPezzi">${pListaPezzi()}</div></div></div>`;
+}
+function pListaPezzi() {
+  const q = S.pezzoQ.trim();
+  const res = q ? D.pezzi.filter(n => match(n, q)).slice(0, 12) : D.pezzi.slice(0, 12);
+  const qOf = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; };
+  return `<div class="lbl" style="font-size:14px">${q ? 'Risultati' : (D.pezzi.length ? 'Usati più spesso' : 'Scrivi il nome del pezzo qui sopra')}</div>
+    <div class="grid1" style="gap:6px">${res.map(n => `<button class="sheet-it" data-a="add-pezzo" data-v="${esc(n)}"><span>${esc(n)}</span><small>${qOf(n) ? 'già ×' + qOf(n) : ''}</small>${SVG.plus()}</button>`).join('')}
+    ${q ? `<button class="sheet-it" style="border:2px dashed var(--color-accent-800);background:var(--color-accent-100);color:var(--color-accent-800)" data-a="add-pezzo" data-v="${esc(q)}"><span>+ Aggiungi «${esc(q)}»</span></button>` : ''}</div>`;
+}
+
+/* ---------- Ricevuta e timbro ---------- */
+function vChiusura(bad) {
+  let h = `<div class="pad">`;
+  h += blk(bad, 'ricevuto', `<div class="lbl">Chi ha ricevuto</div><input class="inp" value="${esc(S.ricevuto)}" data-b="ricevuto">
+    ${S.firmatario && S.ricevuto.trim() !== S.firmatario.trim() ? `<button class="chip" style="margin-top:8px" data-a="uguale-firma">Uguale a chi firma: ${esc(S.firmatario)}</button>` : ''}`);
+  h += facolt('note', 'Note per l\'ufficio <b>(facoltative, il cliente non le vede)</b>', `<textarea class="ta" style="min-height:96px" data-b="note">${esc(S.note)}</textarea>`, !!S.note);
+  let t = `<div class="lbl">Timbro del locale</div><div class="grid2" style="margin-bottom:12px">${opt(S.timbro === 'foto', 'timbro', 'foto', 'Foto del timbro')}${opt(S.timbro === 'firma', 'timbro', 'firma', 'Senza timbro: firma')}</div>`;
+  if (S.timbro === 'foto') t += vFoto('timbro', 'Fotografa il timbro', true);
+  else t += `<div style="font-size:15px;color:var(--color-neutral-800);margin:0 0 8px">Il locale non ha il timbro: fai firmare qui chi ha ricevuto.</div>
+    <button class="sig sig-prev" data-a="firma-apri">${S.firma ? `<img src="${S.firma}" alt="Firma">` : `<div class="sig-cta">Tocca qui per firmare</div>`}<div class="line"></div><div class="t">${S.firma ? 'Tocca per rifare la firma' : 'Si apre a tutto schermo'}</div></button>
+    <button class="btn2" style="margin-top:8px" data-a="cancella-firma">Cancella firma</button>`;
+  h += blk(bad, 'timbro', t);
+  return h + `</div>`;
+}
+
+/* ---------- Officina: macchina ---------- */
+function vMacchina(bad) {
+  let h = `<div class="pad">`;
+  const oc = S.oCliente, oDa = oc && !oc.nuovo && oc.torr && torrName(S.oTorref, S.oTorrNome) === oc.torr;
+  h += vTorref(bad, 'oTorref', S.oTorref, S.oTorrNome, 'otorref', 'otorr-nome',
+    oDa ? `Preselezionata dall'ultima visita (${esc(oc.torr)}). Se è cambiata, tocca quella giusta.` : '');
+  let cli;
+  if (S.oCliente) cli = `<div class="sel-box"><div class="t"><div style="font-size:18px;font-weight:700">${esc(S.oCliente.nome)}</div><div class="s">${S.oCliente.nuovo ? 'Nuovo locale' : esc(cliSub(S.oCliente))}</div></div><button class="btn2" data-a="ocliente-via">Togli</button></div>`;
+  else cli = `<input class="inp" value="${esc(S.oClienteQ)}" placeholder="Cerca il locale" data-b="oClienteQ" data-p="suggOCli" autocomplete="off"><div id="p-suggOCli">${pSuggOCli()}</div>`;
+  h += `<div><div class="lbl">Cliente <span>(facoltativo: solo se la macchina è di un locale)</span></div>${cli}</div>`;
+  if (S.oTorref && S.oTorref !== 'Segafredo') h += blk(bad, 'oDitta', `<div class="lbl">Ditta</div><div class="grid3">${D.ditte.map(l => opt(S.oDitta === l, 'oditta', l, l)).join('')}</div>`);
+  if (S.oTorref === 'Privato') h += vPagamento(bad, true, S.oPag, S.oImporto, S.oFattura);
+  h += blk(bad, 'oTipo', `<div class="lbl">Tipo di macchinario</div><div class="grid2">${D.tipi.map(t => opt(S.oTipo === t, 'otipo', t, t.replace(' (scrivilo in marca e modello)', ''), 'sm')).join('')}</div>`);
+  h += blk(bad, 'oMarca', `<div class="lbl">Marca e modello</div><input class="inp" value="${esc(S.oMarca)}" data-b="oMarca">`);
+  h += `<div class="split">${blk(bad, 'oMatricola', `<div class="lbl">Matricola <span>(o «non leggibile»)</span></div><input class="inp mono" value="${esc(S.oMatricola)}" data-b="oMatricola">`)}
+    <div><div class="lbl">Data targhetta</div><input class="inp month" type="month" value="${esc(S.oData)}" data-b="oData"></div></div>`;
+  h += `<div><div class="lbl">Foto della targhetta <span>(facoltativa)</span></div>${vFoto('targhetta', 'Fotografa la targhetta', true)}</div>`;
+  return h + `</div>`;
+}
+function pSuggOCli() {
+  if (!S.oClienteQ.trim()) return '';
+  const res = D.clienti.filter(c => match([c.nome, c.via, c.loc, c.fraz, c.ex].join(' '), S.oClienteQ)).slice(0, 5);
+  return `<div class="sugg">${res.map(c => `<button data-a="scegli-ocliente" data-v="${esc(c.id)}"><span class="sn"><b>${esc(c.nome)}</b><small>${esc(cliSub(c))}</small></span></button>`).join('')}
+    <button class="new" data-a="nuovo-ocliente">+ Nuovo locale «${esc(S.oClienteQ.trim())}»</button></div>`;
+}
+
+/* ---------- Officina: verifiche ---------- */
+function vVerifiche() {
+  const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length;
+  return `<div class="pad" style="gap:24px"><div><div class="kicker">${esc(S.oTipo)}</div>
+    <p style="margin:6px 0 0;font-size:17px;color:var(--color-neutral-800)">Spunta ogni verifica dopo averla fatta. Si può inviare solo con tutte le spunte.</p></div>
+    <div class="grid1">${ch.map((l, i) => { const d = !!S.checks[S.oTipo + '|' + i]; return `<button class="check ${d ? 'on' : ''}" data-a="check" data-v="${i}"><span class="box">${d ? SVG.check(24, 3) : ''}</span><span class="l">${esc(l)}</span></button>`; }).join('')}</div>
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:22px;color:${done === ch.length ? 'var(--color-accent-800)' : 'var(--color-neutral-800)'}">${done} di ${ch.length} fatte</div></div>`;
+}
+
+/* ---------- Riepilogo ---------- */
+function sezioni() {
+  const R = (k, v, req = true) => ({ k, v: v || (req ? 'Da compilare' : '—'), cls: v ? '' : (req ? 'miss' : 'dim'), miss: req && !v });
+  const phs = k => ph(k) === 'ok' ? 'caricata' : ph(k) === 'up' ? 'in caricamento' : ph(k) === 'err' ? '' : '';
+  const dShort = S.data.split('-').reverse().join('/');
+  const tot = (S.minutes || 0) + (S.prima || 0);
+  const lav = [R('Tempo', tot ? fmt(tot) + (S.prima ? ` (oggi ${fmt(S.minutes || 0)} + prima ${fmt(S.prima)})` : '') : ''), R('Lavoro svolto', S.lavoro.trim()), R('Pezzi', S.pezzi.length ? S.pezzi.map(p => p.q + ' × ' + p.n).join('\n') : 'Nessuno')];
+  const out = [];
+  const sec = (title, screen, rows) => out.push({ title, screen, rows });
+  if (S.mode === 'officina') {
+    const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length;
+    const rows = [R('Data', dShort), R('Torrefazione', torrName(S.oTorref, S.oTorrNome)), R('Cliente', S.oCliente && S.oCliente.nome, false)];
+    if (S.oTorref !== 'Segafredo') rows.push(R('Ditta', S.oDitta));
+    if (S.oTorref === 'Privato') { rows.push(R('Pagamento', S.oPag), R('Importo', S.oImporto ? '€ ' + S.oImporto : '', false)); if (S.oPag === 'Vuole fattura') rows.push(R('Dati fattura', S.oFattura.trim())); }
+    rows.push(R('Tipo', S.oTipo), R('Marca e modello', S.oMarca.trim()), R('Matricola', S.oMatricola.trim().toUpperCase()), R('Data targhetta', fmtMonth(S.oData), false), R('Foto targhetta', phs('targhetta') ? 'Foto ' + phs('targhetta') : '', false));
+    sec('Macchina', 'macchina', rows);
+    lav.push(R('Note per l\'ufficio', S.note.trim(), false));
+    sec('Lavoro e pezzi', 'lavoro', lav);
+    if (ch.length) sec('Verifiche', 'verifiche', [{ ...R('Fatte', done + ' di ' + ch.length), cls: done === ch.length ? '' : 'miss', miss: done < ch.length }]);
+    return out;
+  }
+  const cli = [R('Data', dShort), R('Torrefazione', torrName(S.torref, S.torrNome)), R('Locale', S.cliente && S.cliente.nome)];
+  if (S.cliente && S.cliente.nuovo) cli.push(R('Via', (S.cliente.via || '').trim(), false));
+  if (S.torref === 'Segafredo') {
+    const cc = (S.cliente && !S.cliente.nuovo && !S.ciSblocca && S.cliente.ci) || (/^\d{6}$/.test(S.ci) ? 'CI' + S.ci : '');
+    cli.push(cc ? R('Codice cliente', cc) : { k: 'Codice cliente', v: S.ci ? 'CI' + S.ci + ' (incompleto: non verrà salvato)' : 'Lo completa l\'ufficio', cls: 'dim', miss: false });
+    cli.push(R('Chi firma', S.firmatario.trim()), R('Intervento', S.intervento));
+  }
+  if (S.torref === 'Privato') { cli.push(R('Pagamento', S.pag), R('Importo', S.importo ? '€ ' + S.importo : '', S.pag === 'Contanti')); if (S.pag === 'Vuole fattura') cli.push(R('Dati fattura', S.fattura.trim())); }
+  if (S.torref === 'Altre') cli.push(R('Ditta', S.ditta));
+  cli.push(R('Località', S.localita && (!S.localita.altra || S.localita.libera) ? locLabel(S.localita) : ''));
+  sec('Cliente', 'cliente', cli);
+  if (steps().includes('apparecchi')) {
+    const inst = S.intervento === 'Installazione';
+    sec('Apparecchi', 'apparecchi', APPS.map(a => {
+      const x = S.apps[a.k];
+      if (x.on === null) return { k: a.n, v: 'Sì o no?', cls: 'miss', miss: true };
+      if (!x.on) return { k: a.n, v: 'No', cls: 'dim', miss: false };
+      if (S.intervento === RITIRO) {
+        const m = !x.rMatricola.trim() || (!S.carta && ph('rit_' + a.k) !== 'ok');
+        return { k: a.n, v: 'Ritirato: ' + (x.rModello || '—') + '\nmatr. ' + (x.rMatricola ? x.rMatricola.toUpperCase() : 'mancante') + (x.rData ? ' · ' + fmtMonth(x.rData) : '') + '\nfoto ' + (phs('rit_' + a.k) || 'mancante'), cls: m ? 'miss' : '', miss: m };
+      }
+      let miss = !x.matricola.trim() || (inst && !S.carta && ph('app_' + a.k) !== 'ok');
+      let v = (x.modello || '—') + '\nmatr. ' + (x.matricola ? x.matricola.toUpperCase() : 'mancante') + (x.data ? ' · ' + fmtMonth(x.data) : '') + '\nfoto ' + (phs('app_' + a.k) || (inst ? 'mancante' : 'non fatta (facoltativa)'));
+      if (inst && !x.rNone) { v += '\nRitirato: ' + (x.rModello || '—') + ' · matr. ' + (x.rMatricola ? x.rMatricola.toUpperCase() : 'mancante') + ' · foto ' + (phs('rit_' + a.k) || 'mancante'); if (!x.rMatricola.trim() || (!S.carta && ph('rit_' + a.k) !== 'ok')) miss = true; }
+      if (inst && x.rNone) v += '\nNessuno ritirato';
+      return { k: a.n, v, cls: miss ? 'miss' : '', miss };
+    }));
+  }
+  sec('Lavoro e pezzi', 'lavoro', lav);
+  const tb = (S.timbro === 'foto' ? (phs('timbro') ? 'Foto ' + phs('timbro') : '') : (S.firma ? 'Firma raccolta' : '')) || (S.carta ? 'Sul bollettino di carta' : '');
+  sec('Ricevuta e timbro', 'chiusura', [R('Ha ricevuto', S.ricevuto.trim()), R('Note per l\'ufficio', S.note.trim(), false), R(S.timbro === 'foto' ? 'Timbro' : 'Firma', tb)]);
+  return out;
+}
+function vRiepilogo() {
+  const secs = sezioni(); const missing = [];
+  secs.forEach(x => x.rows.forEach(r => { if (r.miss) missing.push(r.k.toLowerCase()); }));
+  const inCarico = Object.values(S.photos).some(p => p && p.st === 'up');
+  let h = `<div class="pad" style="gap:20px;padding-top:20px">`;
+  if (missing.length) h += `<div class="warn">Prima di inviare completa: ${esc(missing.join(', '))}.</div>`;
+  else if (inCarico) h += `<div class="info">Aspetta che le foto finiscano di caricarsi.</div>`;
+  else h += `<div style="font-size:17px;color:var(--color-neutral-800)">Tutto compilato. Controlla e tocca «Modifica» se serve correggere.</div>`;
+  secs.forEach(sec => {
+    const ex = !!S.expanded[sec.title];
+    const okRows = sec.rows.filter(r => !r.miss && r.v !== '—' && r.v !== 'No' && r.v !== 'Nessuno');
+    const shown = ex ? sec.rows : sec.rows.filter(r => r.miss);
+    h += `<div class="sec blueprint">${CORNERS}<div class="sec-h"><div>${esc(sec.title)}</div>
+      <button class="btn2 acc" data-a="modifica" data-v="${sec.screen}" style="display:flex;gap:6px;align-items:center;min-height:44px">${SVG.pen}Modifica</button></div>
+      ${ex ? '' : `<div class="sec-sum">${esc(okRows.slice(0, 4).map(r => sec.title === 'Apparecchi' ? r.k : r.v.split('\n')[0]).join(' · ') || '—')}</div>`}
+      <div class="sec-rows">${shown.map(r => `<div class="sec-row"><div class="k">${esc(r.k)}</div><div class="v ${r.cls}">${esc(r.v)}</div></div>`).join('')}</div>
+      <button class="sec-tg" data-a="espandi" data-v="${esc(sec.title)}">${ex ? 'Mostra meno' : 'Mostra tutto (' + sec.rows.length + ')'}</button></div>`;
+  });
+  return h + `</div>`;
+}
+
+/* ---------- Conferma ---------- */
+function vConferma() {
+  const e = S.esito || {}; const isOff = S.mode === 'officina';
+  const foto = Object.values(S.photos).filter(p => p && p.st === 'ok').length + (S.timbro === 'firma' && S.firma && !isOff ? 1 : 0);
+  const testo = isOff ? `${S.oTipo} ${S.oMarca}, matricola ${S.oMatricola.toUpperCase()}.` : `${S.cliente ? S.cliente.nome : ''}, ${locLabel(S.localita)}.`;
+  return `<div class="pad" style="padding:48px 24px 28px;min-height:100%;gap:24px">
+    <div class="conf-ico">${SVG.check(46)}</div>
+    <div><h2 class="big" style="margin:0 0 8px">Rapportino inviato</h2><p style="font-size:18px;color:var(--color-neutral-800);margin:0">${esc(testo)}</p></div>
+    <div class="conf-rows"><div><span>Numero</span><b>N. ${esc(e.n || '—')}</b></div><div><span>Inviato</span><b>oggi alle ${esc(e.ora || '')}</b></div>
+      <div><span>Foto e firme</span><b>${foto}</b></div><div><span>Tecnico</span><b>${esc(AUTH.tecnico)}</b></div></div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <button class="big-btn blueprint" data-a="nuovo">${CORNERS}Nuovo rapportino</button>
+      ${isOff ? `<button class="big-btn sec2" data-a="stesso-off">Altra macchina, stesso cliente</button>` : ''}</div></div>`;
+}
+
+/* ---------- Pulsante in basso ---------- */
+function vFooter(sc, warn) {
+  let label = S.fromSummary ? 'Torna al riepilogo' : 'Avanti', dis = false, a = 'avanti', manca = false, vai = '';
+  const mm = ['riepilogo', 'verifiche'].includes(sc) ? [] : missingFor(sc);
+  if (mm.length) { manca = true; a = 'vai-mancante'; label = 'Manca: ' + mm[0].l + (mm.length > 1 ? ` (+${mm.length - 1})` : ''); vai = S.fromSummary ? 'Torna al riepilogo lo stesso' : 'Vai avanti lo stesso (lo completi dopo)'; }
+  if (sc === 'verifiche') { const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length; if (done < ch.length) { label = `Spunta tutte le verifiche (${done}/${ch.length})`; dis = true; } }
+  if (sc === 'riepilogo') {
+    const missing = []; sezioni().forEach(x => x.rows.forEach(r => { if (r.miss) missing.push(r.k); }));
+    const inCarico = Object.values(S.photos).some(p => p && p.st === 'up');
+    a = 'invia';
+    if (missing.length) { dis = true; label = missing.length === 1 ? 'Manca 1 dato' : `Mancano ${missing.length} dati`; }
+    else if (inCarico) { dis = true; label = 'Foto in caricamento…'; }
+    else label = 'Invia all\'ufficio';
+  }
+  return `<div class="ftr"><button class="big-btn blueprint ${dis ? 'dis' : ''} ${manca ? 'manca' : ''}" ${dis ? '' : `data-a="${a}"`}>${CORNERS}${esc(label)}</button>
+    ${vai ? `<button class="vai" data-a="avanti-forza">${vai}</button>` : ''}</div>`;
+}
+
+/* ============================================================
+   AZIONI
+   ============================================================ */
+const A = {
+  riprova: () => avvia(),
+  accedi: () => {
+    const pin = (UI.pinTmp || '').trim(); if (!pin) return;
+    UI.err = ''; UI.phase = 'avvio'; render();
+    run('appAccedi', pin).then(r => { AUTH = { pin, tecnico: '' }; UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); })
+      .catch(e => { UI.phase = 'pin'; UI.err = errMsg(e) === 'CODICE_ERRATO' ? 'Codice sbagliato.' : errMsg(e); render(); });
+  },
+  tecnico: v => { AUTH.tecnico = v; store.set(K_AUTH, AUTH); avvia(); },
+  'tecnico-libero': () => { const v = (document.getElementById('nome-tec').value || '').trim(); if (v) A.tecnico(v); },
+  'cambia-tecnico': () => { tornaAChi(true); },
+  'toggle-data': () => set({ editData: !S.editData }),
+  carta: () => set({ carta: !S.carta }),
+  start: v => {
+    if (AUTH.tablet && v !== 'officina') return;
+    // un rapportino nuovo parte sempre: le bozze restano nella lista "non inviati"
+    const base = { data: S.data, carta: S.carta, editData: false };
+    S = Object.assign(initState(), base);
+    if (v === 'cliente') set({ mode: 'cliente', screen: 'cliente' }); else set({ mode: 'officina', screen: 'macchina' });
+  },
+  furgone: () => {
+    UI.ric = { carico: true }; S.screen = 'furgone'; render();
+    run('appFurgone', AUTH.pin, AUTH.tecnico)
+      .then(r => { UI.ric = r; if (D) D.furgone = (r.pezzi || []).reduce((a, b) => a + b.q, 0); if (S.screen === 'furgone') render(); })
+      .catch(e => { UI.ric = { err: 'Non riesco a leggere la lista: ' + errMsg(e) }; render(); });
+  },
+  'fg-aggiungi': () => {
+    const t = String(UI.fgNome || '').trim();
+    if (!t) { alertBreve('Scrivi il nome del pezzo.'); return; }
+    if (UI.fgInvio) return;
+    UI.fgInvio = true; render();
+    run('appAggiungiFurgone', AUTH.pin, AUTH.tecnico, t, UI.fgNota || '')
+      .then(r => { UI.fgInvio = false; UI.fgNome = ''; UI.fgNota = ''; UI.ric = r; if (D) D.furgone = (r.pezzi || []).reduce((a, b) => a + b.q, 0); if (S.screen === 'furgone') render(); })
+      .catch(e => { UI.fgInvio = false; render(); alertBreve('Non aggiunto: ' + errMsg(e)); });
+  },
+  'carica-uno': i => caricato(Number(i), 1),
+  'carica-tutti': i => caricato(Number(i), 0),
+  'ric-chiudi': () => { UI.ric = null; S.screen = 'inizio'; S.drafts = elencoBozze(); render(); },
+  'apri-lavoro': id => {
+    UI.phase = 'avvio'; render();
+    run('appApriLavoro', AUTH.pin, id).then(j => {
+      UI.phase = 'pronto';
+      S = Object.assign(initState(), j.stato || {}, { lavoroId: id, prima: j.prima || 0, sessioni: j.sessioni || [], minutes: 0, altro: false,
+        mode: 'officina', screen: 'lavoro', data: oggi(), uid: uid(), warned: {}, fromSummary: false, sheet: false, carta: false });
+      render();
+    }).catch(e => { UI.phase = 'pronto'; render(); alertBreve('Non riesco ad aprire il lavoro: ' + errMsg(e)); });
+  },
+  interrompi: () => {
+    if (!S.oTipo || !S.oMarca.trim()) { alertBreve('Prima compila almeno tipo e marca della macchina.'); return; }
+    const c = {}; SAVE.forEach(k => c[k] = S[k]);
+    c.firma = ''; c.photos = {}; Object.keys(S.photos || {}).forEach(k => { const p = S.photos[k]; if (p && p.st === 'ok') c.photos[k] = { st: 'ok', url: p.url, id: p.id }; });
+    ['lavoroId', 'prima', 'sessioni', 'minutes', 'screen', 'drafts', 'uid', 'carta', 'data', 'agg'].forEach(k => delete c[k]);
+    UI.sending = true; render();
+    run('appSalvaLavoro', AUTH.pin, AUTH.tecnico, S.lavoroId || '', JSON.stringify(c), S.minutes || 0, S.data)
+      .then(r => { UI.sending = false; clearDraft(); S = Object.assign(initState(), { data: oggi() }); S.drafts = elencoBozze(); if (D) D.lavori = r.lavori || D.lavori; alertBreve('Salvato in "In corso in officina".'); if (tornaAChi()) return; render(); })
+      .catch(e => { UI.sending = false; render(); alertBreve('Salvataggio non riuscito: ' + errMsg(e) + '. Riprova.'); });
+  },
+  'annulla-lavoro': () => {
+    if (!UI.confAnnulla) { UI.confAnnulla = true; render(); setTimeout(() => { UI.confAnnulla = false; render(); }, 5000); return; }
+    UI.confAnnulla = false;
+    run('appAnnullaLavoro', AUTH.pin, AUTH.tecnico, S.lavoroId)
+      .then(r => { clearDraft(); S = Object.assign(initState(), { data: oggi() }); S.drafts = elencoBozze(); if (D) D.lavori = r.lavori || D.lavori; render(); alertBreve('Lavoro in corso eliminato.'); })
+      .catch(e => alertBreve('Non riuscito: ' + errMsg(e)));
+  },
+  riprendi: id => { const d = bozzeLocali()[id]; if (!d) { S.drafts = elencoBozze(); render(); return; } S = Object.assign(initState(), d, { drafts: [], warned: {}, fromSummary: false, sheet: false }); render(); },
+  scarta: id => {
+    if (UI.confScarta !== id) { UI.confScarta = id; render(); setTimeout(() => { if (UI.confScarta === id) { UI.confScarta = ''; render(); } }, 5000); return; }
+    UI.confScarta = ''; eliminaBozza(id); S.drafts = elencoBozze(); render();
+  },
+  indietro: () => {
+    if (S.fromSummary) return set({ screen: 'riepilogo', fromSummary: false });
+    const st = steps(); const i = st.indexOf(S.screen);
+    if (i > 0) set({ screen: st[i - 1], sheet: false }); else { salvaSubito(); S = Object.assign(initState(), { data: S.data }); S.drafts = elencoBozze(); render(); }
+  },
+  // tocca "Manca: …": porta alla prima domanda da compilare e la fa lampeggiare
+  'vai-mancante': () => {
+    const m = missingFor(S.screen); if (!m.length) return A.avanti();
+    S.warned[S.screen] = true; render();
+    const k = m[0].k;
+    const el = document.getElementById('q-' + k) || document.getElementById('q-' + k.replace(/^(mat|foto|rmat)_/, 'app_'));
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); const i = el.querySelector('input,textarea'); if (i && !i.value) setTimeout(() => i.focus({ preventScroll: true }), 400); }
+  },
+  'avanti-forza': () => { S.warned[S.screen] = true; A.avanti(true); },
+  avanti: forza => {
+    const m = missingFor(S.screen);
+    if (m.length && !forza) return A['vai-mancante']();
+    if (S.fromSummary) return set({ screen: 'riepilogo', fromSummary: false });
+    const st = steps(); set({ screen: st[st.indexOf(S.screen) + 1] || 'riepilogo' }); const mn = document.querySelector('.main'); if (mn) mn.scrollTop = 0;
+  },
+  modifica: v => { set({ screen: v, fromSummary: true }); const mn = document.querySelector('.main'); if (mn) mn.scrollTop = 0; },
+  espandi: v => { S.expanded[v] = !S.expanded[v]; render(); },
+  // cliente
+  torref: v => set({ torref: v, torrNome: v === 'Altre' ? S.torrNome : '' }),
+  'torr-nome': v => set({ torrNome: v }),
+  'scegli-cliente': v => {
+    const c = D.clienti.find(x => x.id === v); if (!c) return;
+    const p = { cliente: Object.assign({}, c), locQ: '', ci: (c.ci || '').replace(/^CI/, ''), firmatario: S.firmatario || c.firma || '', ricevuto: S.ricevuto || c.firma || '' };
+    if (c.torr) { p.torref = torrKind(c.torr); p.torrNome = p.torref === 'Altre' ? c.torr : ''; }
+    if (c.loc) { const l = D.localita.find(x => key(x.n) === key(c.loc)); p.localita = l ? { n: l.n, c: l.c } : S.localita; }
+    set(p);
+  },
+  'nuovo-cliente': () => { set({ cliente: { nome: S.locQ.trim(), nuovo: true, via: '', fraz: '' }, locQ: '', ci: '' }); },
+  'ci-cambia': () => set({ ciSblocca: true, ci: '' }),
+  'cliente-via': () => { UI.geo = ''; set({ cliente: null, ci: '' }); setTimeout(() => { const i = document.getElementById('q-cli'); if (i) i.focus(); }, 50); },
+  'dup-si': v => { const c = D.clienti.find(x => x.id === v); if (c) A['scegli-cliente'](v); },
+  'dup-no': v => { UI.dupOk[v] = true; render(); },
+  'dup-rinomina': v => { const nn = S.cliente.nome; A['scegli-cliente'](v); S.cliente.rinomina = nn; S.cliente.nome = nn; set({ firmatario: '', ricevuto: '' }); },
+  posizione: () => {
+    if (!navigator.geolocation) { UI.geo = '<div class="msg-err">Questo telefono non dà la posizione: scrivi la via a mano.</div>'; return render(); }
+    UI.geo = '<div class="hint">Cerco la posizione…</div>'; render();
+    navigator.geolocation.getCurrentPosition(pos => {
+      run('appIndirizzo', AUTH.pin, pos.coords.latitude, pos.coords.longitude).then(r => {
+        if (!r) { UI.geo = '<div class="msg-err">Indirizzo non trovato: scrivilo a mano.</div>'; return render(); }
+        if (S.cliente) { S.cliente.via = r.via || S.cliente.via; S.cliente.fraz = r.frazione || ''; }
+        const cand = [r.frazione, r.comune].filter(Boolean);
+        let l = null; for (const n of cand) { l = locDaNome(n); if (l) break; }
+        if (l) S.localita = { n: l.n, c: l.c };
+        UI.geo = `<div class="msg-ok">Trovato: ${esc([r.via, r.frazione, r.comune].filter(Boolean).join(', '))}${l ? ' → località «' + esc(l.n) + '»' : ''}. Controlla che sia giusto.</div>` +
+          (l ? '' : `<div class="msg-err">«${esc(r.comune)}» non è nell'elenco località: sceglila qui sotto.</div>`);
+        set({});
+      }).catch(e => { UI.geo = `<div class="msg-err">${esc(errMsg(e))}</div>`; render(); });
+    }, err => {
+      UI.geo = `<div class="msg-err">${err.code === 1 ? 'Posizione non permessa. Scrivi la via a mano (oppure consenti la posizione nelle impostazioni del browser).' : 'Posizione non disponibile: scrivi la via a mano.'}</div>`; render();
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  },
+  intervento: v => set({ intervento: v }),
+  pag: v => set({ pag: v }),
+  ditta: v => set({ ditta: v }),
+  'scegli-loc': v => { const l = D.localita.find(x => x.n === v); set({ localita: { n: l.n, c: l.c }, locaQ: '' }); },
+  'loc-altra': () => set({ localita: { altra: true, libera: S.locaQ.trim() }, locaQ: '' }),
+  'loc-via': () => set({ localita: null }),
+  // apparecchi
+  'app-on': v => {
+    const [k, on] = v.split('|'); const a = Object.assign({}, S.apps[k], { on: on === '1' });
+    const pc = S.cliente && S.cliente.parco && S.cliente.parco[k];
+    if (a.on && pc && S.intervento === RITIRO) { if (!a.rMatricola) Object.assign(a, { rModello: pc.modello || '', rMatricola: pc.matricola || '', rData: pc.data || '', rNone: false, prefilled: true }); }
+    else if (a.on && pc && !a.matricola && S.intervento !== 'Installazione') Object.assign(a, { modello: pc.modello || '', matricola: pc.matricola || '', data: pc.data || '', prefilled: true });
+    S.apps[k] = a; set({});
+  },
+  'rit-none': k => { S.apps[k].rNone = !S.apps[k].rNone; set({}); },
+  // lavoro
+  tempo: v => set({ minutes: Number(v), altro: false }),
+  'tempo-altro': () => set({ altro: true, minutes: S.minutes || 15 }),
+  'tempo-dec': () => set({ minutes: Math.max(15, S.minutes - 15) }),
+  'tempo-inc': () => { const max = (S.mode === 'officina' ? D.oreMaxOfficina : D.oreMaxCliente) * 60; set({ minutes: Math.min(max, S.minutes + 15) }); },
+  frase: v => { const t = S.lavoro.trim(); set({ lavoro: t ? t.replace(/[.,;]$/, '') + ', ' + v.toLowerCase() : v }); },
+  ultimo: i => { const ul = S.cliente.ultimi; const qOf = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; }; const lista = ul.pezzi.filter(p => qOf(p.n) < p.q); aggiungiPezzo(lista[i].n, lista[i].q, true); },
+  'ultimi-tutti': () => { S.cliente.ultimi.pezzi.forEach(p => aggiungiPezzo(p.n, p.q, true, false)); set({}); },
+  'pz-inc': i => { S.pezzi[i].q++; set({}); },
+  'pz-dec': i => { if (S.pezzi[i].q > 1) S.pezzi[i].q--; else S.pezzi.splice(i, 1); set({}); },
+  'apri-pezzi': () => { set({ sheet: true, pezzoQ: '' }); setTimeout(() => { const i = document.getElementById('q-pezzo'); if (i) i.focus(); }, 80); },
+  'chiudi-pezzi': () => set({ sheet: false }),
+  aiuto: () => {
+    UI.aiuto = S.mode && S.screen ? S.screen : (S.screen === 'furgone' ? 'furgone' : 'inizio');
+    render();
+    if (AUTH && AUTH.pin) run('appAiutoAperto', AUTH.pin, AUTH.tecnico, UI.aiuto).catch(() => { });
+  },
+  'chiudi-aiuto': () => { UI.aiuto = ''; render(); },
+  'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
+  // chiusura
+  'uguale-firma': () => set({ ricevuto: S.firmatario }),
+  timbro: v => set({ timbro: v }),
+  'cancella-firma': () => { set({ firma: '' }); },
+  'firma-apri': () => { UI.firma = true; render(); },
+  'firma-pulisci': () => { S.firma = ''; salvaBozza(); render(); },
+  'firma-fatto': () => { UI.firma = false; set({}); },
+  // officina
+  otorref: v => set({ oTorref: v, oTorrNome: v === 'Altre' ? S.oTorrNome : '' }),
+  'otorr-nome': v => set({ oTorrNome: v }),
+  'scegli-ocliente': v => {
+    const c = D.clienti.find(x => x.id === v); if (!c) return;
+    const p = { oCliente: Object.assign({}, c), oClienteQ: '' };
+    if (c.torr && !S.oTorref) { p.oTorref = torrKind(c.torr); p.oTorrNome = p.oTorref === 'Altre' ? c.torr : ''; }
+    set(p);
+  },
+  'nuovo-ocliente': () => set({ oCliente: { nome: S.oClienteQ.trim(), nuovo: true, via: '', fraz: '' }, oClienteQ: '' }),
+  'ocliente-via': () => set({ oCliente: null }),
+  oditta: v => set({ oDitta: v }),
+  opag: v => set({ oPag: v }),
+  otipo: v => set({ oTipo: v }),
+  check: i => { const k = S.oTipo + '|' + i; S.checks[k] = !S.checks[k]; set({}); },
+  // foto
+  foto: k => { fotoKey = k; salvaPrimaDellaFoto(k); const fi = document.getElementById('foto-in'); fi.value = ''; fi.click(); },
+  'foto-gal': k => { fotoKey = k; salvaPrimaDellaFoto(k); const fi = document.getElementById('foto-gal'); fi.value = ''; fi.click(); },
+  'foto-salta': k => { S.photos[k] = { st: 'skip' }; set({}); },
+  // invio
+  invia: () => invia(),
+  nuovo: () => { clearDraft(); S = Object.assign(initState(), { data: oggi() }); S.drafts = elencoBozze(); if (tornaAChi()) return; render(); },
+  'stesso-off': () => { const keep = { oTorref: S.oTorref, oTorrNome: S.oTorrNome, oCliente: S.oCliente, oDitta: S.oDitta, oPag: S.oPag }; clearDraft(); S = Object.assign(initState(), { data: S.data, mode: 'officina', screen: 'macchina' }, keep); render(); }
+};
+function aggiungiPezzo(n, q = 1, almeno = false, rer = false) {
+  n = String(n).trim(); if (!n) return; n = n.charAt(0).toUpperCase() + n.slice(1);
+  const i = S.pezzi.findIndex(p => key(p.n) === key(n));
+  if (i >= 0) S.pezzi[i].q = almeno ? Math.max(S.pezzi[i].q, q) : S.pezzi[i].q + q; else S.pezzi.push({ n, q });
+  if (rer) set({});
+}
+
+/* ---------- eventi ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const f = A[el.dataset.a]; if (f) { e.preventDefault(); f(el.dataset.v, el); }
+});
+const PARTS = { suggCli: pSuggCli, suggLoc: pSuggLoc, ciMsg: pCiMsg, listaPezzi: pListaPezzi, suggOCli: pSuggOCli };
+document.addEventListener('input', e => {
+  const el = e.target; const b = el.dataset && el.dataset.b; if (!b) return;
+  let v = el.value;
+  if (el.dataset.f === 'cifre') { v = v.replace(/\D/g, '').slice(0, 6); if (v !== el.value) el.value = v; }
+  if (el.dataset.f === 'importo') { v = v.replace(/[^\d,.]/g, ''); if (v !== el.value) el.value = v; }
+  if (b.startsWith('UI.')) { UI[b.slice(3)] = v; return; }
+  setPath(b, v);
+  salvaBozza();
+  const p = el.dataset.p; if (p && PARTS[p]) { const box = document.getElementById('p-' + p); if (box) box.innerHTML = PARTS[p](); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.aChange === 'data') { set({ data: el.value || S.data, editData: false }); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'pin') A.accedi();
+  if (e.key === 'Enter' && e.target.id === 'q-pezzo' && S.pezzoQ.trim()) A['add-pezzo'](S.pezzoQ.trim());
+  if (e.key === 'Enter' && (e.target.id === 'fg-nome' || e.target.id === 'fg-nota')) A['fg-aggiungi']();
+});
+
+/* ---------- foto ---------- */
+let fotoKey = null;
+async function fotoScelta(e) {
+  const file = e.target.files && e.target.files[0]; const k = fotoKey; store.del(K_FOTO); if (!file || !k) return;
+  S.photos[k] = { st: 'up' }; render();
+  try {
+    const { full, thumb } = await riduci(file);
+    S.photos[k] = { st: 'up', thumb }; render();
+    const nome = (S.mode === 'officina' ? (S.oMatricola || 'officina') : (S.cliente ? S.cliente.nome : 'cliente')) + ' ' + k;
+    const r = await run('appCaricaFoto', AUTH.pin, full, nome);
+    S.photos[k] = { st: 'ok', thumb, url: r.url, id: r.id };
+  } catch (err) {
+    S.photos[k] = Object.assign({}, S.photos[k], { st: 'err' });
+    alertBreve('Foto non caricata: ' + errMsg(err));
+  }
+  set({});
+}
+document.getElementById('foto-in').addEventListener('change', fotoScelta);
+document.getElementById('foto-gal').addEventListener('change', fotoScelta);
+// Android a volte chiude la pagina mentre è aperta la fotocamera (poca memoria): prima di aprirla salvo subito
+// la bozza (telefono + registro) e un segno; se la pagina riparte, riapro da sola quel rapportino.
+const K_FOTO = 'rap_foto_in_corso';
+function salvaPrimaDellaFoto(k) {
+  if (!S.mode || !S.uid) return;
+  clearTimeout(_bozzaT);
+  const o = {}; SAVE.forEach(x => o[x] = S[x]); o.agg = Date.now(); o.tec = AUTH ? AUTH.tecnico : '';
+  const tutte = bozzeLocali(); tutte[o.uid] = o; store.set(K_BOZZE, tutte);
+  store.set(K_FOTO, { uid: S.uid, k, t: Date.now() });
+  if (AUTH && AUTH.pin) {
+    clearTimeout(_bozzaS);
+    const c = JSON.parse(JSON.stringify(o)); c.firma = '';
+    if (c.photos) Object.keys(c.photos).forEach(x => { if (c.photos[x].st === 'skip') return; if (c.photos[x].st !== 'ok') delete c.photos[x]; else delete c.photos[x].thumb; });
+    run('appSalvaBozza', AUTH.pin, AUTH.tecnico, JSON.stringify(c), c.uid).catch(() => { });
+  }
+}
+function riprendiDopoFoto() {
+  const f = store.get(K_FOTO); if (!f) return false;
+  if (S.mode || Date.now() - (f.t || 0) > 20 * 60000) { store.del(K_FOTO); return false; }
+  const d = bozzeLocali()[f.uid]; if (!d) return false;          // magari arriva dopo dal registro
+  store.del(K_FOTO);
+  S = Object.assign(initState(), d, { drafts: [], warned: {}, fromSummary: false, sheet: false });
+  render();
+  alertBreve('L\'app si è riaperta mentre facevi la foto: il rapportino è salvato, rifai solo la foto.');
+  return true;
+}
+function noteConFotoMancanti() {
+  const manca = Object.keys(S.photos || {}).filter(k => S.photos[k].st === 'skip').map(k => {
+    const a = APPS.find(x => 'app_' + x.k === k || 'rit_' + x.k === k);
+    return 'targhetta ' + (k.startsWith('rit_') ? 'ritirato ' : '') + (a ? a.n.toLowerCase() : k);
+  });
+  return manca.length ? [S.note, 'FOTO NON FATTE (problema del telefono): ' + manca.join(', ')].filter(x => String(x || '').trim()).join('\n') : S.note;
+}
+function riduci(file) {
+  return new Promise((ok, ko) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const out = max => { const r = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; };
+      const cf = out(1400), full = cf.toDataURL('image/jpeg', 0.72); cf.width = cf.height = 0;   // libero subito la memoria
+      const ct = out(160), thumb = ct.toDataURL('image/jpeg', 0.6); ct.width = ct.height = 0;
+      URL.revokeObjectURL(url); img.src = ''; ok({ full, thumb });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); ko(new Error('immagine non leggibile')); };
+    img.src = url;
+  });
+}
+function alertBreve(t) {
+  const d = document.createElement('div'); d.className = 'warn'; d.textContent = t;
+  Object.assign(d.style, { position: 'absolute', left: '16px', right: '16px', top: '16px', zIndex: 9 });
+  $app.appendChild(d); setTimeout(() => d.remove(), 4000);
+}
+
+/* ---------- firma ---------- */
+// Firma a tutto schermo: si apre toccando il riquadro; girando il telefono il riquadro si allarga
+function vFirmaGrande() {
+  return `<div class="firma-full"><div class="ff-h"><div>Firma del cliente<br><small>Puoi girare il telefono in orizzontale</small></div></div>
+    <div class="sig"><canvas id="firma"></canvas><div class="line"></div><div class="t">Firma con il dito sopra la riga</div></div>
+    <div class="ff-b"><button class="big-btn sec2" data-a="firma-pulisci">Cancella</button><button class="big-btn" data-a="firma-fatto">Fatto</button></div></div>`;
+}
+let _firmaRes = null;
+window.addEventListener('resize', () => { if (!UI.firma) return; clearTimeout(_firmaRes); _firmaRes = setTimeout(() => render(), 250); });
+function initFirma() {
+  const el = document.getElementById('firma'); if (!el) return;
+  const r0 = el.getBoundingClientRect(); const dpr = 2;
+  el.width = r0.width * dpr; el.height = r0.height * dpr;
+  const ctx = el.getContext('2d'); ctx.scale(dpr, dpr); ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1d1f20';
+  if (S.firma) { const im = new Image(); im.onload = () => { const k = Math.min(r0.width / im.width, r0.height / im.height); const w = im.width * k, hh = im.height * k; ctx.drawImage(im, (r0.width - w) / 2, (r0.height - hh) / 2, w, hh); }; im.src = S.firma; }
+  let down = false, mosso = false;
+  const pos = e => { const r = el.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  el.addEventListener('pointerdown', e => { down = true; mosso = false; el.setPointerCapture(e.pointerId); const [x, y] = pos(e); ctx.beginPath(); ctx.moveTo(x, y); });
+  el.addEventListener('pointermove', e => { if (!down) return; const [x, y] = pos(e); ctx.lineTo(x, y); ctx.stroke(); mosso = true; });
+  const up = () => {
+    if (!down) return; down = false;
+    if (mosso) {
+      // firma su sfondo bianco, ridotta: si salva nella bozza e si carica all'invio
+      const c = document.createElement('canvas'); c.width = 900; c.height = Math.round(900 * el.height / el.width);
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(el, 0, 0, c.width, c.height);
+      S.firma = c.toDataURL('image/jpeg', 0.8); salvaBozza();
+
+    }
+  };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+}
+
+/* ---------- invio ---------- */
+async function invia() {
+  UI.sending = true; render();
+  try {
+    let fotoTimbro = '';
+    if (S.mode === 'cliente') {
+      if (S.timbro === 'foto') fotoTimbro = (S.photos.timbro && S.photos.timbro.url) || '';
+      else if (S.firma) { const r = await run('appCaricaFoto', AUTH.pin, S.firma, 'firma ' + (S.cliente ? S.cliente.nome : '')); fotoTimbro = r.url; }
+    }
+    const isOff = S.mode === 'officina';
+    const apps = {};
+    APPS.forEach(a => { const x = S.apps[a.k]; apps[a.k] = Object.assign({}, x, { foto: (S.photos['app_' + a.k] || {}).url || '', rFoto: (S.photos['rit_' + a.k] || {}).url || '' }); });
+    const cliRec = c => c ? { id: c.nuovo ? '' : c.id, nome: c.nome, via: c.via || '', fraz: c.fraz || '', nuovo: !!c.nuovo, rinomina: c.rinomina || '' } : null;
+    const r = {
+      uid: S.uid, tecnico: AUTH.tecnico, mode: S.mode, data: S.data, minuti: S.minutes, lavoro: S.lavoro, note: noteConFotoMancanti(), carta: !!S.carta, lavoroId: S.lavoroId || '',
+      pezzi: S.pezzi.map(p => ({ n: p.n, q: p.q }))
+    };
+    if (isOff) Object.assign(r, {
+      torrefazione: torrName(S.oTorref, S.oTorrNome), ditta: S.oDitta, cliente: cliRec(S.oCliente),
+      pag: S.oPag, importo: S.oImporto, fattura: S.oFattura, tipo: S.oTipo, marca: S.oMarca, matricola: S.oMatricola, dataMacc: S.oData,
+      fotoTarghetta: (S.photos.targhetta || {}).url || '', verifiche: verificheTipo().filter((_, i) => S.checks[S.oTipo + '|' + i])
+    });
+    else Object.assign(r, {
+      torrefazione: torrName(S.torref, S.torrNome), ditta: S.ditta, cliente: cliRec(S.cliente),
+      ci: (S.cliente && !S.cliente.nuovo && !S.ciSblocca && S.cliente.ci ? S.cliente.ci.replace(/^CI/, '') : S.ci),
+      firmatario: S.firmatario, intervento: S.intervento, pag: S.pag, importo: S.importo, fattura: S.fattura,
+      localita: S.localita && !S.localita.altra ? S.localita.n : D.altraLoc, localitaLibera: S.localita && S.localita.altra ? S.localita.libera : '',
+      apps, ricevuto: S.ricevuto, timbro: S.timbro, fotoTimbro
+    });
+    const es = await run('appInvia', AUTH.pin, r);
+    es.ora = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    clearDraft();
+    UI.sending = false;
+    S.esito = es; S.screen = 'conferma'; S.savedAt = '';
+    render();
+    run('appDati', AUTH.pin).then(d => { D = d; }).catch(() => { });   // aggiorna clienti e pezzi in sottofondo
+  } catch (e) {
+    UI.sending = false; render();
+    if (errMsg(e) === 'CODICE_ERRATO') { store.del(K_AUTH); AUTH = null; UI.phase = 'pin'; UI.err = 'Il codice d\'accesso è cambiato: inseriscilo di nuovo. Il rapportino resta salvato.'; render(); return; }
+    alertBreve('Invio non riuscito: ' + errMsg(e) + '. Il rapportino è salvato, riprova.');
+  }
+}
+
+/* ---------- avvio ---------- */
+function avvia() {
+  if (!AUTH || !AUTH.pin) { UI.phase = 'pin'; return render(); }
+  if (!AUTH.tecnico) { UI.phase = 'avvio'; render(); return run('appAccedi', AUTH.pin).then(r => { AUTH.tablet = !!r.tablet; store.set(K_AUTH, AUTH); UI.tecnici = r.tecnici || []; UI.phase = 'chi'; render(); }).catch(e => falli(e)); }
+  UI.phase = 'avvio'; render();
+  run('appDati', AUTH.pin).then(d => {
+    D = d; UI.phase = 'pronto';
+    if (!S.mode) { S.data = D.oggi; S.drafts = elencoBozze(); }
+    render();
+    const ripresa = riprendiDopoFoto();
+    run('appLeggiBozze', AUTH.pin, AUTH.tecnico)
+      .then(l => { const n = unisciBozzeServer(l); if (!ripresa && riprendiDopoFoto()) return; if (n && !S.mode) { S.drafts = elencoBozze(); render(); } }).catch(() => { });
+  }).catch(e => falli(e));
+}
+// Tablet di officina: torna alla scelta del nome (dopo un invio, un "Interrompi e salva", o quando si riaccende lo schermo)
+function tornaAChi(sempre) {
+  if (!AUTH || (!AUTH.tablet && !sempre)) return false;
+  AUTH.tecnico = ''; store.set(K_AUTH, AUTH);
+  S = Object.assign(initState(), { data: oggi() });
+  avvia();
+  return true;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && AUTH && AUTH.tablet && AUTH.tecnico && UI.phase === 'pronto' && (!S.mode || S.screen === 'inizio')) tornaAChi();
+});
+function falli(e) {
+  if (errMsg(e) === 'CODICE_ERRATO') { store.del(K_AUTH); AUTH = null; UI.phase = 'pin'; UI.err = 'Codice d\'accesso non valido.'; }
+  else { UI.phase = 'errore'; UI.err = errMsg(e); }
+  render();
+}
+// Link personale (…/exec?t=CHIAVE): entra senza codice e sa già chi sei. Serve perché sull'icona
+// della schermata Home il telefono spesso non conserva il codice tra un'apertura e l'altra.
+function partenza() {
+  if (!DENTRO_GOOGLE) { const t = new URLSearchParams(location.search).get('t') || ''; return entraConChiave(t); }
+  if (!google.script.url) return avvia();
+  google.script.url.getLocation(loc => entraConChiave((loc && loc.parameter && loc.parameter.t) || ''));
+}
+function entraConChiave(t) {
+  {
+    if (AUTH && AUTH.pin === t && AUTH.tablet) { AUTH.tecnico = ''; store.set(K_AUTH, AUTH); return avvia(); }   // tablet: ogni volta chi sei
+    if (!t || (AUTH && AUTH.pin === t && AUTH.tecnico)) return avvia();
+    UI.phase = 'avvio'; render();
+    run('appChiSono', t).then(nome => { AUTH = { pin: t, tecnico: nome || '', tablet: false }; store.set(K_AUTH, AUTH); avvia(); })
+      .catch(e => falli(e));
+  }
+}
+partenza();
+</script>
+</body>
+</html>
