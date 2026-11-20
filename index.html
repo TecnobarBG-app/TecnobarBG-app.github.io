@@ -1126,6 +1126,10 @@ function pListaPezzi() {
   const q = S.pezzoQ.trim();
   // Segafredo: prima i ricambi WE2 con i nomi dei tecnici (collegati al codice San Marco nel registro)
   const segafredo = (S.mode === 'officina' ? S.oTorref : S.torref) === 'Segafredo';
+  // aperti da soli se tra le macchine c'è una WE2 (modello scritto), altrimenti dietro il pulsante "Ricambi WE2"
+  const haWE2 = S.mode === 'officina' ? /we\s*-?\s*2/i.test((S.oTipo || '') + ' ' + (S.oMarca || '')) : Object.values(S.apps || {}).some(x => x && /we\s*-?\s*2/i.test(x.modello || ''));
+  const aperti = haWE2 || UI.we2Aperti || !!q;
+  if (segafredo && D.we2 && D.we2.length && !aperti) return `<button class="sheet-it" style="border:2px solid var(--color-accent-800);margin-bottom:14px" data-a="we2-apri"><span><b>Ricambi WE2</b> (${D.we2.length})</span>${SVG.plus()}</button>` + pListaPezziAltri(q, new Set());
   const we2 = segafredo && D.we2 && D.we2.length ? (q ? D.we2.filter(n => match(n, q)) : D.we2) : [];
   const qOf0 = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; };
   const blocco = we2.length ? `<div class="lbl" style="font-size:14px">Ricambi WE2</div>
@@ -1467,7 +1471,7 @@ const A = {
   'pz-inc': i => { S.pezzi[i].q++; set({}); },
   'pz-dec': i => { if (S.pezzi[i].q > 1) S.pezzi[i].q--; else S.pezzi.splice(i, 1); set({}); },
   'apri-pezzi': () => { set({ sheet: true, pezzoQ: '' }); setTimeout(() => { const i = document.getElementById('q-pezzo'); if (i) i.focus(); }, 80); },
-  'chiudi-pezzi': () => set({ sheet: false }),
+  'chiudi-pezzi': () => { UI.we2Aperti = false; set({ sheet: false }); },
   aiuto: () => {
     UI.aiuto = S.mode && S.screen ? S.screen : (S.screen === 'furgone' ? 'furgone' : S.screen === 'cartucce' ? 'cartucce' : 'inizio');
     render();
@@ -1475,6 +1479,7 @@ const A = {
   },
   'chiudi-aiuto': () => { UI.aiuto = ''; render(); },
   ricarica: () => { document.body.style.opacity = '.5'; try { location.reload(); } catch (e) { location.href = location.href; } },
+  'we2-apri': () => { UI.we2Aperti = true; const el = document.getElementById('p-listaPezzi'); if (el) el.innerHTML = pListaPezzi(); else render(); },
   'senza-pezzi': () => { S.senzaPezzi = true; A.avanti(true); },
   'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
   // chiusura
