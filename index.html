@@ -782,7 +782,8 @@ function vInizio() {
   const giorni = d => Math.floor((Date.now() - (d.agg || Date.now())) / 86400000);
   return `<div class="pad" style="padding-top:32px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="kicker">${AUTH.tablet ? 'Tablet di officina · ' : 'Nuovo rapportino · '}${esc(AUTH.tecnico)}</div><h2 class="big">${AUTH.tablet ? 'Lavoro di officina' : 'Dove hai lavorato?'}</h2></div>
-      <button class="aiuto-btn" data-a="aiuto" aria-label="Aiuto">?</button></div>
+      <div style="display:flex;gap:8px;flex:none"><button class="aiuto-btn" data-a="ricarica" aria-label="Aggiorna l'app" title="Aggiorna l'app" style="font-size:22px">↻</button>
+      <button class="aiuto-btn" data-a="aiuto" aria-label="Aiuto">?</button></div></div>
     <div><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px">
       <div style="font-size:18px;font-weight:600">${S.data === oggi() ? 'Oggi, ' : ''}${esc(dl)}</div>
       <button class="link" data-a="toggle-data">Cambia data</button></div>
@@ -1083,7 +1084,16 @@ function vSheet() {
 }
 function pListaPezzi() {
   const q = S.pezzoQ.trim();
-  const res = q ? D.pezzi.filter(n => match(n, q)).slice(0, 12) : D.pezzi.slice(0, 12);
+  // Segafredo: prima i ricambi WE2 con i nomi dei tecnici (collegati al codice San Marco nel registro)
+  const segafredo = (S.mode === 'officina' ? S.oTorref : S.torref) === 'Segafredo';
+  const we2 = segafredo && D.we2 && D.we2.length ? (q ? D.we2.filter(n => match(n, q)) : D.we2) : [];
+  const qOf0 = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; };
+  const blocco = we2.length ? `<div class="lbl" style="font-size:14px">Ricambi WE2</div>
+    <div class="grid1" style="gap:6px;margin-bottom:14px">${we2.map(n => `<button class="sheet-it" data-a="add-pezzo" data-v="${esc(n)}"><span>${esc(n)}</span><small>${qOf0(n) ? 'già ×' + qOf0(n) : ''}</small>${SVG.plus()}</button>`).join('')}</div>` : '';
+  return blocco + pListaPezziAltri(q, new Set(we2.map(key)));
+}
+function pListaPezziAltri(q, esclusi) {
+  const res = (q ? D.pezzi.filter(n => match(n, q)) : D.pezzi).filter(n => !esclusi.has(key(n))).slice(0, 12);
   const qOf = n => { const p = S.pezzi.find(p => key(p.n) === key(n)); return p ? p.q : 0; };
   return `<div class="lbl" style="font-size:14px">${q ? 'Risultati' : (D.pezzi.length ? 'Usati più spesso' : 'Scrivi il nome del pezzo qui sopra')}</div>
     <div class="grid1" style="gap:6px">${res.map(n => `<button class="sheet-it" data-a="add-pezzo" data-v="${esc(n)}"><span>${esc(n)}</span><small>${qOf(n) ? 'già ×' + qOf(n) : ''}</small>${SVG.plus()}</button>`).join('')}
@@ -1418,6 +1428,7 @@ const A = {
     if (AUTH && AUTH.pin) run('appAiutoAperto', AUTH.pin, AUTH.tecnico, UI.aiuto).catch(() => { });
   },
   'chiudi-aiuto': () => { UI.aiuto = ''; render(); },
+  ricarica: () => { document.body.style.opacity = '.5'; try { location.reload(); } catch (e) { location.href = location.href; } },
   'senza-pezzi': () => { S.senzaPezzi = true; A.avanti(true); },
   'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
   // chiusura
