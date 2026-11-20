@@ -472,7 +472,7 @@ const K_AUTH = 'rapportino-accesso-v1', K_DRAFT = 'rapportino-bozza-v1', K_BOZZE
 const GIORNI_BOZZA_VECCHIA = 3;
 const SAVE = ['screen', 'mode', 'data', 'torref', 'torrNome', 'ditta', 'cliente', 'ci', 'firmatario', 'intervento', 'pag', 'importo', 'fattura',
   'localita', 'apps', 'minutes', 'altro', 'lavoro', 'pezzi', 'ricevuto', 'note', 'timbro', 'firma', 'photos',
-  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni'];
+  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi'];
 
 const SVG = {
   back: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -546,7 +546,7 @@ function initState() {
     localita: null, locaQ: '', apps: Object.fromEntries(APPS.map(a => [a.k, blankApp()])),
     minutes: 0, altro: false, lavoro: '', pezzi: [], sheet: false, pezzoQ: '', ricevuto: '', note: '', timbro: 'foto', firma: '', photos: {},
     oTorref: '', oTorrNome: '', oCliente: null, oClienteQ: '', oDitta: '', oPag: '', oImporto: '', oFattura: '', oTipo: '', oMarca: '', oMatricola: '', oData: '', checks: {},
-    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: []
+    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false
   };
 }
 function set(p, rerender = true) { Object.assign(S, p); salvaBozza(); if (rerender) render(); }
@@ -616,11 +616,22 @@ function eliminaBozza(id) {
   eliminaBozzaServer(id);
 }
 // cancella la bozza del rapportino aperto (inviato, salvato in officina, ecc.)
-const clearDraft = () => { clearTimeout(_bozzaT); eliminaBozza(S.uid); };
+const clearDraft = () => { clearTimeout(_bozzaT); clearTimeout(_bozzaS); segnaInviato(S.uid); eliminaBozza(S.uid); };
+// rapportini già inviati (o chiusi): una loro bozza rimasta nel registro non va più ripresa
+const K_INVIATI = 'rap_inviati';
+function segnaInviato(id) {
+  if (!id) return; const t = store.get(K_INVIATI) || {}; const ora = Date.now();
+  t[id] = ora; Object.keys(t).forEach(k => { if (ora - t[k] > 30 * 86400000) delete t[k]; }); store.set(K_INVIATI, t);
+}
+const giaInviato = id => !!(store.get(K_INVIATI) || {})[id];
 // unisce le bozze salvate nel registro (altro telefono, memoria del telefono svuotata) con quelle locali
 function unisciBozzeServer(lista) {
   const t = bozzeLocali(); let cambiate = false;
-  (lista || []).forEach(b => { if (b && b.uid && (!t[b.uid] || (b.agg || 0) > (t[b.uid].agg || 0))) { t[b.uid] = b; cambiate = true; } });
+  (lista || []).forEach(b => {
+    if (!b || !b.uid) return;
+    if (giaInviato(b.uid)) { eliminaBozzaServer(b.uid); return; }          // inviato da questo telefono: la copia nel registro è un avanzo
+    if (!t[b.uid] || (b.agg || 0) > (t[b.uid].agg || 0)) { t[b.uid] = b; cambiate = true; }
+  });
   if (cambiate) store.set(K_BOZZE, t);
   return cambiate;
 }
@@ -650,7 +661,7 @@ function missingFor(sc, s = S) {
     if (!s.cliente) add('locale', 'locale');
     if (!s.torref || (s.torref === 'Altre' && !s.torrNome)) add('torref', 'torrefazione');
     if (s.torref === 'Segafredo') { if (!s.firmatario.trim()) add('firmatario', 'chi firma'); if (!s.intervento) add('intervento', 'tipo d\'intervento'); }
-    if (s.torref === 'Privato') { if (!s.pag) add('pag', 'pagamento'); if (s.pag === 'Contanti' && !s.importo) add('importo', 'importo'); if (s.pag === 'Vuole fattura' && !s.fattura.trim()) add('fattura', 'dati fattura'); }
+    if (s.torref === 'Privato') { if (!s.pag) add('pag', 'pagamento'); if (s.pag === 'Contanti' && !String(s.importo || '').trim()) add('importo', 'importo incassato'); if (s.pag === 'Vuole fattura' && !s.fattura.trim()) add('fattura', 'dati fattura'); }
     if (s.torref === 'Altre' && !s.ditta) add('ditta', 'ditta');
     if (!s.localita || (s.localita.altra && !String(s.localita.libera || '').trim())) add('localita', 'località');
   }
@@ -681,7 +692,7 @@ function missingFor(sc, s = S) {
   if (sc === 'macchina') {
     if (!s.oTorref || (s.oTorref === 'Altre' && !s.oTorrNome)) add('oTorref', 'torrefazione');
     if (s.oTorref && s.oTorref !== 'Segafredo' && !s.oDitta) add('oDitta', 'ditta');
-    if (s.oTorref === 'Privato') { if (!s.oPag) add('oPag', 'pagamento'); if (s.oPag === 'Vuole fattura' && !s.oFattura.trim()) add('oFattura', 'dati fattura'); }
+    if (s.oTorref === 'Privato') { if (!s.oPag) add('oPag', 'pagamento'); if (s.oPag === 'Contanti' && !String(s.oImporto || '').trim()) add('importo', 'importo incassato'); if (s.oPag === 'Vuole fattura' && !s.oFattura.trim()) add('oFattura', 'dati fattura'); }
     if (!s.oTipo) add('oTipo', 'tipo di macchinario');
     if (!s.oMarca.trim()) add('oMarca', 'marca e modello');
     if (!s.oMatricola.trim()) add('oMatricola', 'matricola');
@@ -1020,7 +1031,11 @@ function vLavoro(bad) {
     <div style="font-size:15px;font-weight:700;color:var(--color-accent-800)">Ultima volta in questo locale (${esc(ul.data.split('-').reverse().join('/'))})</div>
     <div class="chips" style="margin:0">${ultimi.map((p, i) => `<button class="chip" data-a="ultimo" data-v="${i}">+ ${esc(p.n)} ×${p.q}</button>`).join('')}</div>
     <button class="link" data-a="ultimi-tutti" style="align-self:flex-start">Aggiungi tutti</button></div>`;
-  if (!S.pezzi.length) h += `<div class="empty">Nessun pezzo. Se non hai cambiato niente, lascia vuoto.</div>`;
+  if (!S.pezzi.length && S.warned.pezzi && !isOff && !S.senzaPezzi) h += `<div id="box-pezzi" style="border:3px solid var(--color-accent-800);background:#fff3e3;padding:14px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:19px;font-weight:700">Non hai inserito nessun pezzo.</div>
+    <div style="font-size:16px">Se hai cambiato dei ricambi, aggiungili qui sotto con «Aggiungi pezzo» (non basta scriverli nel lavoro svolto).</div>
+    <button class="big-btn sec2" data-a="senza-pezzi">Non ho cambiato pezzi, vai avanti</button></div>`;
+  else if (!S.pezzi.length) h += `<div class="empty">Nessun pezzo. Se non hai cambiato niente, lascia vuoto.</div>`;
   h += `<div class="grid1" style="gap:6px">${S.pezzi.map((p, i) => `<div class="pezzo"><div class="n">${esc(p.n)}</div>
     <button class="qbtn" data-a="pz-dec" data-v="${i}" aria-label="Togli uno">${p.q === 1 ? SVG.trash : SVG.minus()}</button>
     <div class="q">${p.q}</div><button class="qbtn" data-a="pz-inc" data-v="${i}" aria-label="Aggiungi uno">${SVG.plus()}</button></div>`).join('')}</div>
@@ -1138,7 +1153,7 @@ function sezioni() {
     const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length;
     const rows = [R('Data', dShort), R('Torrefazione', torrName(S.oTorref, S.oTorrNome)), R('Cliente', S.oCliente && S.oCliente.nome, false)];
     if (S.oTorref !== 'Segafredo') rows.push(R('Ditta', S.oDitta));
-    if (S.oTorref === 'Privato') { rows.push(R('Pagamento', S.oPag), R('Importo', S.oImporto ? '€ ' + S.oImporto : '', false)); if (S.oPag === 'Vuole fattura') rows.push(R('Dati fattura', S.oFattura.trim())); }
+    if (S.oTorref === 'Privato') { rows.push(R('Pagamento', S.oPag), R('Importo', S.oImporto ? '€ ' + S.oImporto : '', S.oPag === 'Contanti')); if (S.oPag === 'Vuole fattura') rows.push(R('Dati fattura', S.oFattura.trim())); }
     rows.push(R('Tipo', S.oTipo), R('Marca e modello', S.oMarca.trim()), R('Matricola', S.oMatricola.trim().toUpperCase()), R('Data targhetta', fmtMonth(S.oData), false), R('Foto targhetta', phs('targhetta') ? 'Foto ' + phs('targhetta') : '', false));
     sec('Macchina', 'macchina', rows);
     lav.push(R('Note per l\'ufficio', S.note.trim(), false));
@@ -1325,6 +1340,12 @@ const A = {
   avanti: forza => {
     const m = missingFor(S.screen);
     if (m.length && !forza) return A['vai-mancante']();
+    // dal cliente senza pezzi: una volta chiedo se se li è dimenticati (capita di scriverli solo nella descrizione)
+    if (S.screen === 'lavoro' && S.mode === 'cliente' && !S.pezzi.length && !S.senzaPezzi) {
+      S.warned.pezzi = true; render();
+      const el = document.getElementById('box-pezzi'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     if (S.fromSummary) return set({ screen: 'riepilogo', fromSummary: false });
     const st = steps(); set({ screen: st[st.indexOf(S.screen) + 1] || 'riepilogo' }); const mn = document.querySelector('.main'); if (mn) mn.scrollTop = 0;
   },
@@ -1397,6 +1418,7 @@ const A = {
     if (AUTH && AUTH.pin) run('appAiutoAperto', AUTH.pin, AUTH.tecnico, UI.aiuto).catch(() => { });
   },
   'chiudi-aiuto': () => { UI.aiuto = ''; render(); },
+  'senza-pezzi': () => { S.senzaPezzi = true; A.avanti(true); },
   'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
   // chiusura
   'uguale-firma': () => set({ ricevuto: S.firmatario }),
