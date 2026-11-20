@@ -755,7 +755,7 @@ function vistaApp() {
       <div class="saved" id="saved-at">${S.savedAt ? 'Bozza salvata alle ' + S.savedAt : ''}</div></div>`;
   }
   h += `<div class="main" data-screen="${sc}">`;
-  const V = { inizio: vInizio, cliente: vCliente, apparecchi: vApparecchi, lavoro: vLavoro, chiusura: vChiusura, macchina: vMacchina, verifiche: vVerifiche, riepilogo: vRiepilogo, conferma: vConferma, furgone: vFurgone };
+  const V = { inizio: vInizio, cliente: vCliente, apparecchi: vApparecchi, lavoro: vLavoro, chiusura: vChiusura, macchina: vMacchina, verifiche: vVerifiche, riepilogo: vRiepilogo, conferma: vConferma, furgone: vFurgone, cartucce: vCartucce };
   h += (V[sc] || vInizio)(bad);
   h += `</div>`;
   if (idx >= 0) h += vFooter(sc, warn);
@@ -801,11 +801,51 @@ function vInizio() {
       <button class="choice blueprint" data-a="start" data-v="officina">${CORNERS}<b>${AUTH.tablet ? 'Nuova macchina' : 'Lavoro di officina'}</b><span>Una scheda per ogni macchina. Se non la finisci, la salvi e la riprende chiunque.</span></button>
     </div>
     ${AUTH.tablet ? '' : `<button class="big-btn sec2" data-a="furgone">Da rimettere sul furgone${D && D.furgone ? ` (${D.furgone})` : ''}</button>`}
+    <button class="big-btn sec2" data-a="cartucce">Tabelle cartucce (durezza acqua)</button>
     ${AUTH.tablet ? `<button class="big-btn sec2" data-a="cambia-tecnico">Non sei ${esc(AUTH.tecnico)}? Cambia</button>` : ''}
   </div>`;
 }
 
 /* ---------- da rimettere sul furgone ---------- */
+/* ---------- Tabelle cartucce: durezza → bypass e litri (non tocca i rapportini) ---------- */
+// Trascritte dai libretti: BRITA PURITY C Quell ST (teste con bypass variabile 0–70%), BWT tabella T2.
+// Riga = gradi (BWT: 31 = oltre 30). Valori: [bypass, litri per ogni modello].
+const CARTUCCE = {"Brita":{"modelli":["C25","C50","C150","C300","C500","C1100"],"righe":{"4":[70,697,1900,4766,7917,13458,22760],"5":[70,697,1900,4766,7917,13458,22760],"6":[70,697,1900,4766,7917,13458,22760],"7":[60,668,1821,4569,7589,12902,21819],"8":[50,523,1425,3574,5938,10094,17070],"9":[50,464,1267,3177,5278,8972,15174],"10":[40,352,960,2408,4000,6800,11500],"11":[40,320,873,2189,3636,6182,10455],"12":[30,254,693,1738,2887,4908,8300],"13":[30,235,640,1604,2665,4530,7661],"14":[30,218,594,1490,2474,4207,7114],"15":[30,203,554,1390,2310,3926,6640],"16":[30,191,520,1303,2165,3681,6225],"17":[30,179,489,1227,2038,3464,5859],"18":[30,169,462,1159,1925,3272,5533],"19":[20,142,387,970,1612,2740,4634],"20":[20,135,368,922,1531,2603,4402],"21":[20,128,350,878,1458,2479,4193],"22":[20,123,334,838,1392,2366,4002],"23":[20,117,320,802,1332,2264,3828],"24":[20,112,306,768,1276,2169,3669],"25":[20,108,294,737,1225,2083,3522],"26":[20,104,283,709,1178,2002,3386],"27":[20,100,272,683,1134,1928,3261],"28":[20,96,263,658,1094,1859,3145],"29":[20,93,253,636,1056,1795,3036],"30":[20,90,245,615,1021,1735,2935],"31":[20,87,237,595,988,1679,2840],"32":[20,84,230,576,957,1627,2751],"33":[20,82,223,559,928,1578,2668],"34":[20,79,216,542,901,1531,2590],"35":[20,77,210,527,875,1488,2516]}},"BWT":{"modelli":["bestmax 10","bestmax 15","bestmax 20","bestmax 25","bestmax 30","bestmax 35","bestmax 40","bestmax 42","bestmax 45"],"righe":{"4":[3,2310,4420,7760,10920,16670,22420,25870,36100,48350],"5":[3,1850,3540,6210,8740,13340,17940,20700,28900,38700],"6":[3,1540,2940,5180,7280,11110,14950,17250,24050,32240],"7":[3,1320,2530,4440,6230,9520,12810,13800,19250,25790],"8":[3,1000,2160,3880,5340,8330,11210,12650,17650,23640],"9":[3,880,1910,3450,4850,7410,9940,11380,15880,21270],"10":[3,800,1720,3100,4370,6670,8970,10690,14900,20000],"11":[2,700,1620,2820,3850,5820,7970,9300,13000,17380],"12":[2,640,1540,2590,3530,5170,7300,7830,10900,14630],"13":[2,590,1150,2030,3050,4660,6270,7490,10450,14000],"14":[2,550,1070,1880,2760,4330,5820,6380,8900,11900],"15":[2,510,990,1760,2580,4040,5430,6290,8780,11750],"16":[2,480,940,1650,2420,3790,5090,5890,8220,11000],"17":[2,450,820,1550,2120,3320,4470,5180,7230,9680],"18":[1,420,780,1460,2060,2800,4220,4890,6820,9140],"19":[1,400,730,1380,1950,2650,4000,4630,6460,8650],"20":[1,380,700,1310,1850,2520,3800,4400,6140,8220],"21":[1,360,660,1250,1760,2400,3620,4190,5840,7830],"22":[1,340,640,1190,1680,2290,3460,4000,5580,7470],"23":[1,330,570,1100,1470,2360,3150,3720,5190,6950],"24":[1,310,540,1050,1410,2260,2970,3560,4960,6650],"25":[0,280,480,940,1250,2020,2650,3170,4420,5920],"26":[0,270,470,900,1210,1940,2550,3050,4250,5700],"27":[0,260,450,870,1160,1870,2450,2940,4100,5490],"28":[0,250,430,840,1120,1800,2360,2830,3950,5290],"29":[0,240,420,810,1080,1740,2280,2740,3820,5120],"30":[0,230,400,780,1040,1680,2210,2640,3680,4930],"31":[0,210,350,670,890,1440,1890,2270,3170,4240]}}};
+function cartRisultato(c) {
+  const T = CARTUCCE[c.marca]; if (!T || c.mod == null || !c.ml || !c.gocce) return null;
+  const gradi = c.gocce * (c.ml === 5 ? 2 : 1);
+  const chiavi = Object.keys(T.righe).map(Number).sort((a, b) => a - b);
+  const min = chiavi[0], max = chiavi[chiavi.length - 1];
+  const r = Math.min(Math.max(gradi, min), max);
+  const riga = T.righe[String(r)];
+  const fuori = gradi < min ? `Sotto i ${min} gradi la tabella non scende: valori di ${min} gradi.` :
+    gradi > max ? (c.marca === 'BWT' ? 'Oltre 30 gradi: valori dell\'ultima riga (>30).' : `Oltre i ${max} gradi la tabella finisce: valori di ${max} gradi, controlla bene.`) : '';
+  return { gradi, bypass: c.marca === 'BWT' ? 'posizione ' + riga[0] : riga[0] + '%', litri: riga[1 + c.mod], fuori };
+}
+function vCartucce() {
+  const c = UI.cart || (UI.cart = Object.assign({ marca: '', mod: null, ml: 10, gocce: 0 }, store.get('rap_cartucce') || {}, { gocce: 0 }));
+  const T = CARTUCCE[c.marca];
+  const res = cartRisultato(c);
+  const op = (a, v, on, txt) => `<button class="opt ${on ? 'on' : ''}" data-a="${a}" data-v="${v}" style="min-height:56px">${txt}</button>`;
+  let h = `<div class="pad" style="padding-top:20px">
+    <div style="display:flex;align-items:center;gap:8px"><button class="ico-btn" data-a="cart-chiudi" aria-label="Indietro">${SVG.back}</button>
+      <div><div class="kicker">Riferimento</div><h2 class="big" style="margin:0">Tabelle cartucce</h2></div></div>
+    <div><div class="lbl">Marca</div><div class="grid2">${op('cart-marca', 'Brita', c.marca === 'Brita', 'Brita')}${op('cart-marca', 'BWT', c.marca === 'BWT', 'BWT')}</div></div>`;
+  if (T) h += `<div><div class="lbl">Modello</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${T.modelli.map((m, i) => op('cart-mod', i, c.mod === i, esc(m))).join('')}</div></div>`;
+  h += `<div><div class="lbl">Acqua prelevata</div><div class="grid2">${op('cart-ml', 5, c.ml === 5, '5 ml <small style="font-weight:400">(1 goccia = 2 gradi)</small>')}${op('cart-ml', 10, c.ml === 10, '10 ml <small style="font-weight:400">(1 goccia = 1 grado)</small>')}</div></div>
+    <div><div class="lbl">Gocce contate</div><div class="stepper" style="display:flex;align-items:center;gap:12px">
+      <button class="qbtn" style="width:64px;height:64px" data-a="cart-gocce" data-v="-1" aria-label="Una goccia in meno">${SVG.minus(26)}</button>
+      <div style="font-family:var(--font-heading);font-size:44px;font-weight:700;min-width:70px;text-align:center">${c.gocce}</div>
+      <button class="qbtn" style="width:64px;height:64px" data-a="cart-gocce" data-v="1" aria-label="Una goccia in più">${SVG.plus(26)}</button></div></div>`;
+  if (res) h += `<div style="border:3px solid var(--color-accent-800);padding:16px;display:flex;flex-direction:column;gap:8px;background:#fff">
+      <div style="font-size:16px;color:var(--color-neutral-800)">${esc(c.marca)} ${esc(T.modelli[c.mod])} · durezza <b>${res.gradi} gradi</b></div>
+      <div style="font-size:22px">Bypass: <b>${esc(res.bypass)}</b></div>
+      <div style="font-size:22px">Capacità: <b>${res.litri.toLocaleString('it-IT')} litri</b></div>
+      ${res.fuori ? `<div class="warn" style="font-size:15px">${esc(res.fuori)}</div>` : ''}
+      <div style="font-size:14px;color:var(--color-neutral-800)">${c.marca === 'BWT' ? 'Tabella BWT T2.' : 'Tabella BRITA PURITY C Quell ST, testa con bypass variabile.'} Valori del libretto: in caso di dubbio vale il libretto.</div></div>`;
+  else h += `<div class="empty">${!c.marca ? 'Scegli la marca.' : c.mod == null ? 'Scegli il modello.' : 'Conta le gocce e segnale qui sopra.'}</div>`;
+  return h + `</div>`;
+}
 function vFurgone() {
   const R = UI.ric || {};
   let h = `<div class="pad" style="padding-top:20px">
@@ -1301,6 +1341,12 @@ const A = {
   },
   'carica-uno': i => caricato(Number(i), 1),
   'carica-tutti': i => caricato(Number(i), 0),
+  cartucce: () => { UI.cart = null; S.screen = 'cartucce'; render(); },
+  'cart-chiudi': () => { S.screen = 'inizio'; S.drafts = elencoBozze(); render(); },
+  'cart-marca': v => { const c = UI.cart; if (c.marca !== v) c.mod = null; c.marca = v; store.set('rap_cartucce', { marca: c.marca, ml: c.ml }); render(); },
+  'cart-mod': v => { UI.cart.mod = Number(v); render(); },
+  'cart-ml': v => { UI.cart.ml = Number(v); store.set('rap_cartucce', { marca: UI.cart.marca, ml: UI.cart.ml }); render(); },
+  'cart-gocce': v => { UI.cart.gocce = Math.max(0, Math.min(60, UI.cart.gocce + Number(v))); render(); },
   'ric-chiudi': () => { UI.ric = null; S.screen = 'inizio'; S.drafts = elencoBozze(); render(); },
   'apri-lavoro': id => {
     UI.phase = 'avvio'; render();
@@ -1423,7 +1469,7 @@ const A = {
   'apri-pezzi': () => { set({ sheet: true, pezzoQ: '' }); setTimeout(() => { const i = document.getElementById('q-pezzo'); if (i) i.focus(); }, 80); },
   'chiudi-pezzi': () => set({ sheet: false }),
   aiuto: () => {
-    UI.aiuto = S.mode && S.screen ? S.screen : (S.screen === 'furgone' ? 'furgone' : 'inizio');
+    UI.aiuto = S.mode && S.screen ? S.screen : (S.screen === 'furgone' ? 'furgone' : S.screen === 'cartucce' ? 'cartucce' : 'inizio');
     render();
     if (AUTH && AUTH.pin) run('appAiutoAperto', AUTH.pin, AUTH.tecnico, UI.aiuto).catch(() => { });
   },
