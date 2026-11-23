@@ -241,7 +241,7 @@ function gruppi(pf) {
   const ordine = { codice: 1, loc: 2, altra: 3, ditta: 4, incasso: 5, prezzo: 6 };
   out.forEach(g => {
     if (g.t === 'prezzo') {
-      const s = g.occ.find(o => o.fonte === 'listino') || g.occ.find(o => o.fonte);
+      const s = g.occ.find(o => o.fonte === 'testo') || g.occ.find(o => o.fonte === 'listino') || g.occ.find(o => o.fonte);
       if (s) { g.su = Math.round(s.su * 100) / 100; g.fonte = s.fonte; g.info = s.info; }
     }
   });
@@ -471,7 +471,7 @@ function domanda(g) {
       const tot = g.occ.length === 1 ? g.su * g.occ[0].q : null;
       h += `<div class="scelta"><div class="lbl">Prezzo suggerito</div>
         <button class="btn ok sugg" data-a="prezzo" data-k="${k}" data-v="${g.su}">✓ Va bene ${euro(g.su)}${diversi ? ' cad.' : ''}${tot != null && g.occ[0].q > 1 ? ` (${euro(tot)} per ${g.occ[0].q})` : ''}
-        <small>${g.fonte === 'listino' ? 'dal listino' + (g.info ? ': ' + esc(g.info) : '') : 'ultimo prezzo ' + esc(g.info)}</small></button></div>`;
+        <small>${g.fonte === 'listino' ? 'dal listino' + (g.info ? ': ' + esc(g.info) : '') : g.fonte === 'testo' ? esc(g.info) + ' – confermalo' : 'ultimo prezzo ' + esc(g.info)}</small></button></div>`;
     }
     h += `<div class="scelta"><div class="lbl">${g.su != null ? 'Oppure scrivo io' : 'Scrivi il prezzo'}${diversi ? ' (per 1 pezzo)' : ''}</div>
       <div class="euro"><input type="text" inputmode="decimal" id="inPrezzo" placeholder="0,00" autocomplete="off"><span>€</span>
