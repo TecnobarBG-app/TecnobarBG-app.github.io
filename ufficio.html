@@ -75,6 +75,7 @@ tr.prob td { background: var(--rosso-soft); }
 .cosa { font-size: 26px; font-weight: 700; background: #fffbe6; border: 1px dashed #d9c27a; border-radius: 8px; padding: 10px 14px; margin: 6px 0 14px; word-break: break-word; }
 .contesto { font-size: 15px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; margin: 8px 0; }
 .contesto b { color: var(--text); }
+.contesto .macc { color: var(--text); }
 .scelta { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
 .scelta > .lbl { font-weight: 700; margin-bottom: 8px; font-size: 18px; }
 .sugg { display: block; width: 100%; text-align: left; font-size: 22px; padding: 16px 18px; }
@@ -450,11 +451,14 @@ function vistaWiz() {
   return h;
 }
 
+// Dati del rapportino accanto a ogni cosa da sistemare. L'attrezzatura (modello, matricola) serve a dare il prezzo giusto al pezzo.
 function contesto(occ, max) {
   const righe = occ.slice(0, max || 4).map(o => {
     const x = intervento(o.id);
+    const macc = x.macc ? `<br><span class="macc">Attrezzatura: <b>${esc(x.macc)}</b></span>`
+      : o.t === 'prezzo' ? '<br><i>Modello dell\'attrezzatura non scritto nel rapportino</i>' : '';
     return `<div class="contesto"><b>N. ${esc(x.num)}</b> · ${esc(x.data)} · <b>${esc(x.cliente)}</b>${x.officina ? ' · officina' : x.loc ? ' · ' + esc(x.loc) : ''}${x.tec ? ' · ' + esc(x.tec) : ''}
-      ${x.lavoro ? `<br>Lavoro: ${esc(x.lavoro.slice(0, 220))}` : ''}${o.t === 'prezzo' && occ.length > 1 ? `<br>Quantità: <b>${o.q}</b> (${esc(o.pezzo)})` : ''}</div>`;
+      ${macc}${x.lavoro ? `<br>Lavoro: ${esc(x.lavoro.slice(0, 220))}` : ''}${o.t === 'prezzo' && occ.length > 1 ? `<br>Quantità: <b>${o.q}</b> (${esc(o.pezzo)})` : ''}</div>`;
   }).join('');
   return righe + (occ.length > (max || 4) ? `<div class="contesto">…e altri ${occ.length - (max || 4)}</div>` : '');
 }
