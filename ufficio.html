@@ -352,10 +352,19 @@ function cardFtPrivati() {
 }
 function rigaFtPriv(x) {
   const aperto = V.ftPriv === x.id;
-  let h = `<div class="contesto" style="margin-top:8px"><div class="riga"><div><b>N. ${esc(x.num)}</b> · ${esc(x.data)}${x.delMese ? '' : ` · <b style="color:var(--rosso)">${esc(nomeMese(x.mese))}</b>`} · <b>${esc(x.cliente)}</b>
-      <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<b style="color:var(--rosso)">non scritti dal tecnico</b>'}</div>
-      <div class="sub">Dal registro: ${euro(x.tot)} + IVA (${euro(x.tot * 1.22)})${x.imp !== '' ? ` · incassati ${esc(x.imp)} €` : ''}</div></div>
-      <div style="text-align:right">${aperto ? '' : `<button class="btn ok piccolo" data-a="ftPriv" data-id="${esc(x.id)}">Fatturata</button><br>`}<button class="link" data-a="apri" data-n="${x.n}">Apri</button></div></div>`;
+  // con cose da sistemare (prezzi, località, incasso…) prima si sistema, poi si fattura: come per le torrefazioni
+  let azione;
+  if (x.prob && x.delMese) azione = D.permessi === 'fatture' ? '<span class="sub">Lo sistemano Stefano o Enrico</span>' : `<button class="btn warn piccolo" data-a="wiz" data-pf="${esc(x.pf)}">Sistema (${x.prob})</button>`;
+  else if (x.prob) azione = `<button class="btn warn piccolo" data-a="vaiMeseDi" data-m="${esc(x.mese)}">Sistema in ${esc(nomeMese(x.mese))}</button>`;
+  else azione = aperto ? '' : `<button class="btn ok piccolo" data-a="ftPriv" data-id="${esc(x.id)}">Fatturata</button>`;
+  let h = `<div class="contesto" style="margin-top:8px"><div class="riga">
+      <div><b>N. ${esc(x.num)}</b> · ${esc(x.data)}${x.delMese ? '' : ` · <b style="color:var(--rosso)">${esc(nomeMese(x.mese))}</b>`} · <b>${esc(x.cliente)}</b>
+        <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<b style="color:var(--rosso)">non scritti dal tecnico</b>'}</div>
+        <div class="sub">Dal registro: ${euro(x.tot)} + IVA (${euro(x.tot * 1.22)})${x.imp !== '' ? ` · incassati ${esc(x.imp)} €` : ''}</div>
+        ${x.prob ? `<div class="sub" style="color:var(--rosso)"><b>${x.prob} ${x.prob === 1 ? 'cosa' : 'cose'} da sistemare</b> (es. prezzi dei pezzi): prima sistema, poi fattura.</div>` : ''}
+      </div>
+      <div style="text-align:right">${azione}${azione ? '<br>' : ''}<button class="link" data-a="apri" data-n="${x.n}">Apri</button></div>
+    </div>`;
   if (aperto) h += `<div class="form"><label for="fpNum">Numero fattura</label><input type="text" id="fpNum" autocomplete="off">
     <label for="fpData">Data fattura</label><input type="date" id="fpData" value="${D.oggi}">
     <label for="fpImp">Importo totale della fattura (€)</label><div class="euro"><input type="text" inputmode="decimal" id="fpImp" placeholder="0,00"><span>€</span></div>
@@ -653,6 +662,7 @@ document.addEventListener('click', async ev => {
   if (a === 'dettagli') { V.aperti[b.dataset.pf] = !V.aperti[b.dataset.pf]; return render(); }
   if (a === 'form') { V.form = { pf: b.dataset.pf, az: b.dataset.az }; render(); const f = $('fNota'); if (f && b.dataset.az === 'correggere') f.focus(); return; }
   if (a === 'chiudiForm') { V.form = null; V.ftPriv = null; return render(); }
+  if (a === 'vaiMeseDi') return caricaMese(b.dataset.m);
   if (a === 'ftPriv') { V.ftPriv = b.dataset.id; render(); const f = $('fpNum'); if (f) f.focus(); return; }
   if (a === 'salvaFtPriv') {
     const imp = leggiEuro($('fpImp').value);
