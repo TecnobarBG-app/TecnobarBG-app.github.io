@@ -611,6 +611,7 @@ function elencoBozze() {
 }
 function eliminaBozzaServer(id) { if (AUTH && AUTH.pin && id) run('appSalvaBozza', AUTH.pin, AUTH.tecnico, '', id).catch(() => { }); }
 function eliminaBozza(id) {
+  segnaInviato(id);                      // eliminata: non va più ripresa da nessuna copia
   const t = bozzeLocali(); delete t[id]; store.set(K_BOZZE, t);
   if (id === S.uid) clearTimeout(_bozzaS);
   eliminaBozzaServer(id);
@@ -625,9 +626,13 @@ function segnaInviato(id) {
 }
 const giaInviato = id => !!(store.get(K_INVIATI) || {})[id];
 // unisce le bozze salvate nel registro (altro telefono, memoria del telefono svuotata) con quelle locali
-function unisciBozzeServer(lista) {
+function unisciBozzeServer(dati) {
+  // nuovo formato {bozze, chiuse}: le chiuse (eliminate o inviate da qualsiasi telefono) spariscono anche da qui
+  const lista = Array.isArray(dati) ? dati : (dati && dati.bozze) || [];
+  const chiuse = Array.isArray(dati) ? [] : (dati && dati.chiuse) || [];
   const t = bozzeLocali(); let cambiate = false;
-  (lista || []).forEach(b => {
+  chiuse.forEach(id => { segnaInviato(id); if (t[id] && id !== S.uid) { delete t[id]; cambiate = true; } });
+  lista.forEach(b => {
     if (!b || !b.uid) return;
     if (giaInviato(b.uid)) { eliminaBozzaServer(b.uid); return; }          // inviato da questo telefono: la copia nel registro è un avanzo
     if (!t[b.uid] || (b.agg || 0) > (t[b.uid].agg || 0)) { t[b.uid] = b; cambiate = true; }
@@ -1709,7 +1714,7 @@ function avvia() {
     if (!S.mode) { S.data = D.oggi; S.drafts = elencoBozze(); }
     render();
     const ripresa = riprendiDopoFoto();
-    run('appLeggiBozze', AUTH.pin, AUTH.tecnico)
+    run('appLeggiBozze2', AUTH.pin, AUTH.tecnico)
       .then(l => { const n = unisciBozzeServer(l); if (!ripresa && riprendiDopoFoto()) return; if (n && !S.mode) { S.drafts = elencoBozze(); render(); } }).catch(() => { });
   }).catch(e => falli(e));
 }
