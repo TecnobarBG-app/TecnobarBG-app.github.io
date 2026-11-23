@@ -192,7 +192,14 @@ async function caricaMese(m) {
 function statoPf(g) {
   const np = gruppi(g.key).length;
   const M = D.modi || {};
-  if (g.privati) return np ? { c: 'rosso', t: `${np} da sistemare` } : { c: 'grigio', t: 'Clienti privati: niente proforma' };
+  if (g.privati) {   // niente proforma; si fattura solo a chi l'ha chiesto nel rapportino (riquadro "Clienti privati da fatturare")
+    if (np) return { c: 'rosso', t: `${np} da sistemare` };
+    const ft = (D.privatiFt || []).filter(x => x.delMese);
+    const da = ft.filter(x => !x.ft).length;
+    if (da) return { c: 'arancio', t: `${da} ${da === 1 ? 'vuole' : 'vogliono'} la fattura: da fare` };
+    if (ft.length) return { c: 'grigio', t: `Niente proforma · ${ft.length === 1 ? 'fattura fatta' : ft.length + ' fatture fatte'}` };
+    return { c: 'grigio', t: 'Clienti privati: niente proforma' };
+  }
   if (g.modo === M.PORTALE && (g.stato === 'Fatturata' || g.stato === 'Documenti inviati')) {
     const mancano = [g.conf ? '' : 'caricare sul portale', g.stato === 'Documenti inviati' ? '' : 'mandare la mail'].filter(Boolean);
     if (!mancano.length) return { c: 'grigio', t: `Caricata sul portale il ${g.conf} · mail inviata il ${g.inv}` };
@@ -260,6 +267,7 @@ function vistaMese() {
   if (daFare) h += `<div class="banner rosso"><div><b>${daFare} ${daFare === 1 ? 'cosa' : 'cose'} da sistemare</b><br><span class="sub">Una alla volta: prezzi, codici, località…</span></div>
     ${D.permessi === 'fatture' ? '<span class="sub">Le correzioni le fanno Stefano o Enrico.</span>' : '<button class="btn warn" data-a="wiz" data-pf="">Inizia a sistemare →</button>'}</div>`;
   else h += `<div class="banner verde"><div><b>Tutto a posto ✓</b><br><span class="sub">I dati del mese sono completi: le proforma si possono mandare.</span></div></div>`;
+  h += cardFtPrivati();
   if (D.bozze && D.bozze.length) {
     const per = {}; D.bozze.forEach(b => (per[b.tec] = per[b.tec] || []).push(b));
     h += `<div class="card arancio"><h2>Rapportini non ancora inviati dai tecnici</h2>
@@ -281,7 +289,7 @@ function cardPf(g) {
     <div style="text-align:right"><div class="num">${euro(g.tot)}</div><div class="sub">${g.num} ${g.num === 1 ? 'intervento' : 'interventi'}</div></div></div>
     <span class="pill ${s.c}">${esc(s.t)}</span>`;
   if (g.stato === 'Da correggere' && g.nota) h += `<div class="avviso"><b>Da correggere:</b> ${esc(g.nota)}</div>`;
-  if (s.c === 'arancio') h += `<div class="avviso">Nessuna risposta: conviene mandare un sollecito.</div>`;
+  if (s.c === 'arancio' && !g.privati) h += `<div class="avviso">Nessuna risposta: conviene mandare un sollecito.</div>`;
   if (g.cambiata) h += `<div class="avviso"><b>Cambiata dopo l'invio:</b> era ${euro(g.totInv)} con ${g.numInv} interventi, ora ${euro(g.tot)} con ${g.num}. Controlla se va rimandata.</div>`;
   if (g.vuota) h += `<div class="avviso">Non ci sono più interventi di questa proforma nel mese (forse spostati di mese).</div>`;
   if (!g.privati && !g.vuota) {
@@ -332,6 +340,29 @@ function cardPf(g) {
   if (V.aperti[nomeG]) h += tabellaPf(g);
   return h + '</div>';
 }
+/* ---------- clienti privati che vogliono la fattura ---------- */
+// Tutti quelli ancora da fatturare, anche dei mesi prima: restano qui finché qualcuno non scrive i dati della fattura.
+function cardFtPrivati() {
+  const da = (D.privatiFt || []).filter(x => !x.ft);
+  if (!da.length) return '';
+  const altri = da.filter(x => !x.delMese).length;
+  return `<div class="card arancio" id="ftPriv"><h2>Clienti privati da fatturare (${da.length})</h2>
+    <p class="sub">Hanno chiesto la fattura nel rapportino. Restano qui finché non scrivi i dati della fattura${altri ? ` · <b>${altri} ${altri === 1 ? 'è' : 'sono'} di mesi passati</b>` : ''}.</p>
+    ${da.map(rigaFtPriv).join('')}</div>`;
+}
+function rigaFtPriv(x) {
+  const aperto = V.ftPriv === x.id;
+  let h = `<div class="contesto" style="margin-top:8px"><div class="riga"><div><b>N. ${esc(x.num)}</b> · ${esc(x.data)}${x.delMese ? '' : ` · <b style="color:var(--rosso)">${esc(nomeMese(x.mese))}</b>`} · <b>${esc(x.cliente)}</b>
+      <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<b style="color:var(--rosso)">non scritti dal tecnico</b>'}</div>
+      <div class="sub">Dal registro: ${euro(x.tot)} + IVA (${euro(x.tot * 1.22)})${x.imp !== '' ? ` · incassati ${esc(x.imp)} €` : ''}</div></div>
+      <div style="text-align:right">${aperto ? '' : `<button class="btn ok piccolo" data-a="ftPriv" data-id="${esc(x.id)}">Fatturata</button><br>`}<button class="link" data-a="apri" data-n="${x.n}">Apri</button></div></div>`;
+  if (aperto) h += `<div class="form"><label for="fpNum">Numero fattura</label><input type="text" id="fpNum" autocomplete="off">
+    <label for="fpData">Data fattura</label><input type="date" id="fpData" value="${D.oggi}">
+    <label for="fpImp">Importo totale della fattura (€)</label><div class="euro"><input type="text" inputmode="decimal" id="fpImp" placeholder="0,00"><span>€</span></div>
+    <label for="fpNota">Nota (facoltativa)</label><input type="text" id="fpNota">
+    <div class="azioni"><button class="btn ok" data-a="salvaFtPriv" data-id="${esc(x.id)}">Salva: fatturata</button><button class="link" data-a="chiudiForm">Annulla</button></div></div>`;
+  return h + '</div>';
+}
 function pannelloMail(m) {
   const riga = (lbl, id, val) => `<label>${lbl}</label><div class="euro"><input type="text" id="${id}" value="${esc(val)}" readonly style="max-width:none;font-size:17px;font-weight:400"><button class="btn sec piccolo" data-a="copia" data-id="${id}">Copia</button></div>`;
   const mailto = 'mailto:' + encodeURIComponent(m.a || '') + '?subject=' + encodeURIComponent(m.oggetto) + (m.cc ? '&cc=' + encodeURIComponent(m.cc) : '') + '&body=' + encodeURIComponent(m.testo);
@@ -379,8 +410,15 @@ function formStato(g, az) {
 function tabellaPf(g) {
   const conProb = new Set(D.problemi.filter(p => p.pf === g.key).map(p => p.id));
   const r = D.interventi.filter(x => x.pf === g.key);
-  return `<table><thead><tr><th>N.</th><th>Data</th><th>Cliente</th><th>Località</th><th>Tecnico</th><th class="e">Totale</th></tr></thead><tbody>
-    ${r.map(x => `<tr class="${conProb.has(x.id) ? 'prob' : ''}" style="cursor:pointer" data-a="apri" data-n="${x.n}"><td><button class="link" data-a="apri" data-n="${x.n}">${esc(x.num)}</button></td><td>${esc(x.data)}</td><td>${esc(x.cliente)}${x.codice && x.codice !== 'MANCANTE' ? `<br><span class="sub">${esc(x.codice)}</span>` : ''}</td><td>${esc(x.officina ? 'Officina' : x.loc)}</td><td>${esc(x.tec)}</td><td class="e">${euro(x.tot)}</td></tr>`).join('')}
+  const ftDi = {}; (D.privatiFt || []).forEach(x => { ftDi[x.id] = x; });
+  const colFt = x => {
+    const f = ftDi[x.id];
+    if (!f) return '<span class="sub">Non vuole fattura</span>';
+    if (!f.ft) return '<b style="color:var(--arancio)">Fattura da fare</b>';
+    return `Ft. ${esc(f.ft.n)} del ${esc(f.ft.data)}<br><button class="link" data-a="riapriFtPriv" data-id="${esc(x.id)}">Non è fatturata</button>`;
+  };
+  return `<table><thead><tr><th>N.</th><th>Data</th><th>Cliente</th><th>Località</th><th>Tecnico</th>${g.privati ? '<th>Fattura</th>' : ''}<th class="e">Totale</th></tr></thead><tbody>
+    ${r.map(x => `<tr class="${conProb.has(x.id) ? 'prob' : ''}" style="cursor:pointer" data-a="apri" data-n="${x.n}"><td><button class="link" data-a="apri" data-n="${x.n}">${esc(x.num)}</button></td><td>${esc(x.data)}</td><td>${esc(x.cliente)}${x.codice && x.codice !== 'MANCANTE' ? `<br><span class="sub">${esc(x.codice)}</span>` : ''}</td><td>${esc(x.officina ? 'Officina' : x.loc)}</td><td>${esc(x.tec)}</td>${g.privati ? `<td>${colFt(x)}</td>` : ''}<td class="e">${euro(x.tot)}</td></tr>`).join('')}
     </tbody></table>`;
 }
 
@@ -614,7 +652,19 @@ document.addEventListener('click', async ev => {
   if (a === 'dividi') { V.dividi[k] = true; return render(); }
   if (a === 'dettagli') { V.aperti[b.dataset.pf] = !V.aperti[b.dataset.pf]; return render(); }
   if (a === 'form') { V.form = { pf: b.dataset.pf, az: b.dataset.az }; render(); const f = $('fNota'); if (f && b.dataset.az === 'correggere') f.focus(); return; }
-  if (a === 'chiudiForm') { V.form = null; return render(); }
+  if (a === 'chiudiForm') { V.form = null; V.ftPriv = null; return render(); }
+  if (a === 'ftPriv') { V.ftPriv = b.dataset.id; render(); const f = $('fpNum'); if (f) f.focus(); return; }
+  if (a === 'salvaFtPriv') {
+    const imp = leggiEuro($('fpImp').value);
+    if (!$('fpNum').value.trim()) return toast('Scrivi il numero della fattura', 'err');
+    if (isNaN(imp) || imp <= 0) return toast('Scrivi l\'importo della fattura', 'err');
+    const ok = await salva('uffFatturaPrivato', [b.dataset.id, { num: $('fpNum').value.trim(), data: $('fpData').value, importo: imp, nota: $('fpNota').value.trim() }], 'Fattura segnata');
+    if (ok) V.ftPriv = null; return render();
+  }
+  if (a === 'riapriFtPriv') {
+    if (!confirm('Rimettere questo rapportino tra i privati da fatturare? (i dati della fattura vengono cancellati)')) return;
+    return salva('uffFatturaPrivato', [b.dataset.id, { riapri: true }], 'Rimesso tra i da fatturare');
+  }
   if (a === 'pdf') {
     const gp = D.proforma.find(x => x.key === b.dataset.pf);
     $('busy').textContent = 'Preparo il PDF… (può volerci qualche minuto)';
