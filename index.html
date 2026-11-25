@@ -495,7 +495,7 @@ const K_AUTH = 'rapportino-accesso-v1', K_DRAFT = 'rapportino-bozza-v1', K_BOZZE
 const GIORNI_BOZZA_VECCHIA = 3;
 const SAVE = ['screen', 'mode', 'data', 'torref', 'torrNome', 'ditta', 'cliente', 'ci', 'firmatario', 'intervento', 'pag', 'importo', 'fattura',
   'localita', 'apps', 'minutes', 'altro', 'lavoro', 'pezzi', 'ricevuto', 'note', 'timbro', 'firma', 'photos',
-  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi', 'ciNonSo', 'verificheNo'];
+  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi', 'ciNonSo', 'verificheNo', 'ft', 'oft'];
 
 const SVG = {
   back: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -560,6 +560,7 @@ let AUTH = store.get(K_AUTH); // { pin, tecnico }
 let S = initState();
 let UI = { phase: 'avvio', err: '', tecnici: [], pinTmp: '', sending: false, geo: '', dupOk: {}, confAnnulla: false, ric: null, confScarta: '' };
 
+function ftVuoto() { return { nome: '', id: '', ind: '', sdi: '', tel: '', uff: false }; }
 function blankApp() { return { on: null, modello: '', matricola: '', data: '', rNone: false, rModello: '', rMatricola: '', rData: '', prefilled: false }; }
 function oggi() { return D ? D.oggi : new Date().toISOString().slice(0, 10); }
 function initState() {
@@ -569,7 +570,7 @@ function initState() {
     localita: null, locaQ: '', apps: Object.fromEntries(APPS.map(a => [a.k, blankApp()])),
     minutes: 0, altro: false, lavoro: '', pezzi: [], sheet: false, pezzoQ: '', ricevuto: '', note: '', timbro: 'foto', firma: '', photos: {},
     oTorref: '', oTorrNome: '', oCliente: null, oClienteQ: '', oDitta: '', oPag: '', oImporto: '', oFattura: '', oTipo: '', oMarca: '', oMatricola: '', oData: '', checks: {},
-    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false, ciNonSo: false, verificheNo: false
+    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false, ciNonSo: false, verificheNo: false, ft: ftVuoto(), oft: ftVuoto()
   };
 }
 function set(p, rerender = true) { Object.assign(S, p); salvaBozza(); if (rerender) render(); }
@@ -690,7 +691,7 @@ function missingFor(sc, s = S) {
     if (!s.cliente) add('locale', 'locale');
     if (!s.torref || (s.torref === 'Altre' && !s.torrNome)) add('torref', 'torrefazione');
     if (s.torref === 'Segafredo') { if (!s.firmatario.trim()) add('firmatario', 'chi firma'); if (!s.intervento) add('intervento', 'tipo d\'intervento'); }
-    if (s.torref === 'Privato') { if (!s.pag) add('pag', 'pagamento'); if (s.pag === 'Contanti' && !String(s.importo || '').trim()) add('importo', 'importo incassato'); if (s.pag === 'Vuole fattura' && !s.fattura.trim()) add('fattura', 'dati fattura'); }
+    if (s.torref === 'Privato') { if (!s.pag) add('pag', 'pagamento'); if (s.pag === 'Contanti' && !String(s.importo || '').trim()) add('importo', 'importo incassato'); if (s.pag === 'Vuole fattura') { const fm = ftMancanti(s.ft, s.fattura); if (fm.length) add('fattura', fm[0]); } }
     if (s.torref === 'Altre' && !s.ditta) add('ditta', 'ditta');
     if (!s.localita || (s.localita.altra && !String(s.localita.libera || '').trim())) add('localita', 'località');
   }
@@ -721,7 +722,7 @@ function missingFor(sc, s = S) {
   if (sc === 'macchina') {
     if (!s.oTorref || (s.oTorref === 'Altre' && !s.oTorrNome)) add('oTorref', 'torrefazione');
     if (s.oTorref && s.oTorref !== 'Segafredo' && !s.oDitta) add('oDitta', 'ditta');
-    if (s.oTorref === 'Privato') { if (!s.oPag) add('oPag', 'pagamento'); if (s.oPag === 'Contanti' && !String(s.oImporto || '').trim()) add('importo', 'importo incassato'); if (s.oPag === 'Vuole fattura' && !s.oFattura.trim()) add('oFattura', 'dati fattura'); }
+    if (s.oTorref === 'Privato') { if (!s.oPag) add('oPag', 'pagamento'); if (s.oPag === 'Contanti' && !String(s.oImporto || '').trim()) add('importo', 'importo incassato'); if (s.oPag === 'Vuole fattura') { const fm = ftMancanti(s.oft, s.oFattura); if (fm.length) add('oFattura', fm[0]); } }
     if (!s.oTipo) add('oTipo', 'tipo di macchinario');
     if (!s.oMarca.trim()) add('oMarca', 'marca e modello');
     if (!s.oMatricola.trim()) add('oMatricola', 'matricola');
@@ -981,12 +982,86 @@ function vFoto(key, label, big) {
   return `<div class="foto-ok">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="ph"></div>'}<div class="m ${p.st === 'err' ? 'err' : ''}">${msg}</div>
     <button class="btn2" data-a="foto" data-v="${key}">Rifai</button></div>`;
 }
+// Dati per la fattura a campi separati (25/11). Nel registro va sempre un testo unico (S.fattura / S.oFattura), composto qui.
+// «Non ha i dati: li chiede l'ufficio» lascia vuoti i dati fiscali ma chiede nome e telefono, così l'ufficio può richiamare.
+function idFiscale(v) {
+  const c = String(v || '').replace(/[\s.\-]/g, '').toUpperCase().replace(/^IT(?=\d{11}$)/, '');
+  if (!c) return { tipo: '' };
+  if (/^\d{11}$/.test(c)) {
+    let t = 0; for (let i = 0; i < 11; i++) { let d = +c[i]; if (i % 2) { d *= 2; if (d > 9) d -= 9; } t += d; }
+    return { tipo: 'piva', ok: t % 10 === 0 };
+  }
+  if (/^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/.test(c)) return { tipo: 'cf', ok: true };
+  return { tipo: 'no' };
+}
+function componiFattura(f) {
+  if (!f) return '';
+  const r = [];
+  if (f.uff) r.push('DA COMPLETARE IN UFFICIO: il cliente non aveva i dati');
+  if (f.nome.trim()) r.push('Nome: ' + f.nome.trim());
+  if (!f.uff && f.id.trim()) r.push('P.IVA o C.F.: ' + f.id.trim().toUpperCase());
+  if (!f.uff && f.ind.trim()) r.push('Indirizzo: ' + f.ind.trim());
+  if (!f.uff && f.sdi.trim()) r.push('SDI o PEC: ' + f.sdi.trim());
+  if (f.tel.trim()) r.push('Tel: ' + f.tel.trim());
+  return r.join('\n');
+}
+function ftMancanti(f, testo) {
+  if (!f || (!f.uff && !f.nome && !f.id && !f.ind && !f.sdi && !f.tel)) return String(testo || '').trim() ? [] : ['dati per la fattura'];
+  const m = [];
+  if (!f.nome.trim()) m.push(f.uff ? 'nome del cliente' : 'nome o ragione sociale');
+  if (f.uff) { if (!f.tel.trim()) m.push('telefono del cliente'); return m; }
+  const id = idFiscale(f.id);
+  if (id.tipo !== 'piva' && id.tipo !== 'cf') m.push('P.IVA o codice fiscale');
+  if (!f.ind.trim()) m.push('indirizzo');
+  return m;
+}
+function aggiornaFattura() {
+  S.fattura = componiFattura(S.ft); S.oFattura = componiFattura(S.oft);
+  ['ft', 'oft'].forEach(k => { const el = document.getElementById('p-' + k + 'Id'); if (el) el.innerHTML = msgId(S[k].id); });
+}
+function msgId(v) {
+  const x = idFiscale(v);
+  if (!x.tipo) return '<div class="hint">P.IVA: 11 cifre. Codice fiscale: 16 caratteri.</div>';
+  if (x.tipo === 'no') return '<div class="msg-err">Non sembra né una partita IVA (11 cifre) né un codice fiscale (16 caratteri)</div>';
+  if (x.tipo === 'piva' && !x.ok) return '<div class="hint" style="color:#b45309;font-weight:700">Partita IVA di 11 cifre, ma una cifra sembra sbagliata: ricontrollala</div>';
+  return `<div class="msg-ok">${x.tipo === 'piva' ? 'Partita IVA corretta' : 'Codice fiscale corretto'}</div>`;
+}
+function vDatiFattura(k, testo) {
+  const f = S[k] || (S[k] = ftVuoto());
+  // bozza delle versioni precedenti (testo libero): il testo va nel nome, da sistemare
+  if (testo && !f.nome && !f.id && !f.ind && !f.sdi && !f.tel && !f.uff && !testo.startsWith('Nome: ')) { f.nome = testo; }
+  const campo = (c, label, extra = '') => `<div style="margin-top:10px"><div class="lbl" style="font-size:16px;margin-bottom:6px">${label}</div>
+    <input class="inp" value="${esc(f[c])}" data-b="${k}.${c}" autocomplete="off" ${extra}></div>`;
+  // il pulsante «non ha i dati» sta in fondo e in piccolo: prima si prova a chiederli (col codice Segafredo, se è comodo, lo si salta)
+  const btnUff = `<button class="big-btn sec2" data-a="ft-uff" data-v="${k}" style="margin-top:12px;min-height:52px;font-size:18px">${f.uff ? 'Ha i dati: li scrivo' : 'Non ha i dati: li chiede l\'ufficio'}</button>`;
+  if (f.uff) return `<div class="lbl">Dati per la fattura</div><div><div class="info">Il cliente non ha i dati: scrivi almeno il nome e il telefono, l'ufficio lo richiama.</div>`
+    + campo('nome', 'Nome o ragione sociale') + campo('tel', 'Telefono del cliente', 'type="tel" inputmode="tel"') + btnUff + '</div>';
+  return `<div class="lbl">Dati per la fattura</div><div>` + campo('nome', 'Nome o ragione sociale')
+    + `<div style="margin-top:10px"><div class="lbl" style="font-size:16px;margin-bottom:6px">Partita IVA o codice fiscale</div>
+      <input class="inp mono" value="${esc(f.id)}" data-b="${k}.id" autocomplete="off"><div id="p-${k}Id">${msgId(f.id)}</div></div>`
+    + campo('ind', 'Indirizzo <span>(via, numero, CAP, comune)</span>')
+    + campo('sdi', 'Codice SDI o PEC <span>(se lo sa)</span>', 'autocapitalize="characters"')
+    + campo('tel', 'Telefono <span>(facoltativo, utile all\'ufficio)</span>', 'type="tel" inputmode="tel"') + btnUff + '</div>';
+}
+
+// Dati per la fattura: controllo leggero (non blocca). Scrivere "verifica in ufficio" sembra compilato ma non lo è:
+// servono partita IVA o codice fiscale e, con la partita IVA, codice SDI o PEC. Stesso controllo del backoffice.
+function fatturaKo(t) {
+  t = String(t || '').trim();
+  if (!t) return '';
+  const piva = /(^|[^0-9])(IT\s?)?\d{11}(?![0-9])/i.test(t), cf = /[A-Z]{6}\s?\d{2}\s?[A-Z]\s?\d{2}\s?[A-Z]\s?\d{3}\s?[A-Z]/i.test(t);
+  if (!piva && !cf) return 'Manca la partita IVA o il codice fiscale';
+  if (piva && !cf && !/@/.test(t) && !/SDI\W*[A-Z0-9]{7}\b/i.test(t) && !/\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{7}\b/.test(t) && !/\b0000000\b/.test(t)) return 'Manca il codice SDI o la PEC';
+  return '';
+}
+const msgFattura = t => { const ko = fatturaKo(t); return !String(t || '').trim() ? '' : ko
+  ? `<div class="hint" style="color:#b45309;font-weight:700">${ko}: chiedilo al cliente. Se non ce l'ha, scrivi il suo numero di telefono: l'ufficio lo richiamerà.</div>`
+  : '<div class="msg-ok">Dati per la fattura completi</div>'; };
 function vPagamento(bad, pre, pag, importo, fattura) {
   return `${blk(bad, pre ? 'oPag' : 'pag', `<div class="lbl">Pagamento</div><div class="grid2">${['Contanti', 'Vuole fattura'].map(l => opt(pag === l, pre ? 'opag' : 'pag', l, l)).join('')}</div>`)}
     ${blk(bad, 'importo', `<div class="lbl">Importo incassato ${pag === 'Vuole fattura' ? '<span>(se ha pagato)</span>' : ''}</div><div class="prefix eur"><span>€</span>
       <input class="inp" type="text" inputmode="decimal" value="${esc(importo)}" data-b="${pre ? 'oImporto' : 'importo'}" data-f="importo"></div>`)}
-    ${pag === 'Vuole fattura' ? blk(bad, pre ? 'oFattura' : 'fattura', `<div class="lbl">Dati per la fattura <span>(nome o ragione sociale, codice fiscale o P.IVA, indirizzo, codice SDI o PEC)</span></div>
-      <textarea class="ta" data-b="${pre ? 'oFattura' : 'fattura'}">${esc(fattura)}</textarea>`) : ''}`;
+    ${pag === 'Vuole fattura' ? blk(bad, pre ? 'oFattura' : 'fattura', vDatiFattura(pre ? 'oft' : 'ft', fattura)) : ''}`;
 }
 
 /* ---------- Dati cliente ---------- */
@@ -1251,6 +1326,12 @@ function vVerifiche() {
 }
 
 /* ---------- Riepilogo ---------- */
+// riga "Dati fattura" del riepilogo: manca se manca qualcosa dei campi obbligatori (anche con testo scritto)
+function rFt(f, testo) {
+  const m = ftMancanti(f, testo);
+  return m.length ? { k: 'Dati fattura', v: (String(testo || '').trim() ? testo.trim() + '\n' : '') + 'Manca: ' + m.join(', '), cls: 'miss', miss: true }
+    : { k: 'Dati fattura', v: String(testo).trim(), cls: '', miss: false };
+}
 function sezioni() {
   const R = (k, v, req = true) => ({ k, v: v || (req ? 'Da compilare' : '—'), cls: v ? '' : (req ? 'miss' : 'dim'), miss: req && !v });
   const phs = k => ph(k) === 'ok' ? 'caricata' : ph(k) === 'up' ? 'in caricamento' : ph(k) === 'attesa' ? 'salvata sul telefono (si carica quando prende)' : '';
@@ -1263,7 +1344,7 @@ function sezioni() {
     const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length;
     const rows = [R('Data', dShort), R('Torrefazione', torrName(S.oTorref, S.oTorrNome)), R('Cliente', S.oCliente && S.oCliente.nome, false)];
     if (S.oTorref !== 'Segafredo') rows.push(R('Ditta', S.oDitta));
-    if (S.oTorref === 'Privato') { rows.push(R('Pagamento', S.oPag), R('Importo', S.oImporto ? '€ ' + S.oImporto : '', S.oPag === 'Contanti')); if (S.oPag === 'Vuole fattura') rows.push(R('Dati fattura', S.oFattura.trim())); }
+    if (S.oTorref === 'Privato') { rows.push(R('Pagamento', S.oPag), R('Importo', S.oImporto ? '€ ' + S.oImporto : '', S.oPag === 'Contanti')); if (S.oPag === 'Vuole fattura') rows.push(rFt(S.oft, S.oFattura)); }
     rows.push(R('Tipo', S.oTipo), R('Marca e modello', S.oMarca.trim()), R('Matricola', S.oMatricola.trim().toUpperCase()), R('Data targhetta', fmtMonth(S.oData), false), R('Foto targhetta', phs('targhetta') ? 'Foto ' + phs('targhetta') : '', false));
     sec('Macchina', 'macchina', rows);
     lav.push(R('Note per l\'ufficio', S.note.trim(), false));
@@ -1281,7 +1362,7 @@ function sezioni() {
     cli.push(cc ? R('Codice cliente', cc) : { k: 'Codice cliente', v: S.ci ? 'CI' + S.ci + ' (incompleto: non verrà salvato)' : 'Lo completa l\'ufficio', cls: 'dim', miss: false });
     cli.push(R('Chi firma', S.firmatario.trim()), R('Intervento', S.intervento));
   }
-  if (S.torref === 'Privato') { cli.push(R('Pagamento', S.pag), R('Importo', S.importo ? '€ ' + S.importo : '', S.pag === 'Contanti')); if (S.pag === 'Vuole fattura') cli.push(R('Dati fattura', S.fattura.trim())); }
+  if (S.torref === 'Privato') { cli.push(R('Pagamento', S.pag), R('Importo', S.importo ? '€ ' + S.importo : '', S.pag === 'Contanti')); if (S.pag === 'Vuole fattura') cli.push(rFt(S.ft, S.fattura)); }
   if (S.torref === 'Altre') cli.push(R('Ditta', S.ditta));
   cli.push(R('Località', S.localita && (!S.localita.altra || S.localita.libera) ? locLabel(S.localita) : ''));
   sec('Cliente', 'cliente', cli);
@@ -1555,6 +1636,7 @@ const A = {
     const el = document.getElementById('q-ci'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('q', 'flash'); }
     setTimeout(() => { const i = document.getElementById('in-ci'); if (i) i.focus({ preventScroll: true }); }, 350);
   },
+  'ft-uff': k => { S[k].uff = !S[k].uff; aggiornaFattura(); set({}); },
   'pop-ver-torno': () => { UI.popup = ''; render(); },
   'pop-ver-avanti': () => { UI.popup = ''; S.verificheNo = true; A.avanti(true); },
   'pop-ci-nonso': () => { UI.popup = ''; S.ciNonSo = true; A.avanti(UI.popForza); },
@@ -1603,7 +1685,7 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
   const f = A[el.dataset.a]; if (f) { e.preventDefault(); f(el.dataset.v, el); }
 });
-const PARTS = { suggCli: pSuggCli, suggLoc: pSuggLoc, ciMsg: pCiMsg, listaPezzi: pListaPezzi, suggOCli: pSuggOCli };
+const PARTS = { ftMsg: () => msgFattura(S.fattura), oftMsg: () => msgFattura(S.oFattura), suggCli: pSuggCli, suggLoc: pSuggLoc, ciMsg: pCiMsg, listaPezzi: pListaPezzi, suggOCli: pSuggOCli };
 document.addEventListener('input', e => {
   const el = e.target; const b = el.dataset && el.dataset.b; if (!b) return;
   let v = el.value;
@@ -1611,6 +1693,7 @@ document.addEventListener('input', e => {
   if (el.dataset.f === 'importo') { v = v.replace(/[^\d,.]/g, ''); if (v !== el.value) el.value = v; }
   if (b.startsWith('UI.')) { UI[b.slice(3)] = v; return; }
   setPath(b, v);
+  if (/^o?ft\./.test(b)) aggiornaFattura();
   salvaBozza();
   const p = el.dataset.p; if (p && PARTS[p]) { const box = document.getElementById('p-' + p); if (box) box.innerHTML = PARTS[p](); }
 });
