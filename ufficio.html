@@ -94,6 +94,10 @@ tr.prob td { background: var(--rosso-soft); }
 .ris { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
 .ris:hover { border-color: var(--accent); }
 .ris.ann { opacity: .55; text-decoration: line-through; }
+.tab-prezzi { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.tab-prezzi td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tab-prezzi td.e { text-align: right; white-space: nowrap; width: 1%; }
+.tab-prezzi tr.tot td { font-weight: 700; border-bottom: 0; }
 .campo-v { white-space: pre-wrap; background: #fafafa; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
 dl.tutto { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 4px 12px; font-size: 15px; }
 dl.tutto dt { color: var(--muted); } dl.tutto dd { margin: 0; white-space: pre-wrap; word-break: break-word; }
@@ -597,7 +601,8 @@ function vistaRap() {
     h += `<div class="card" style="border-left-color:var(--line)">
       <p><b>Lavoro svolto</b></p><div class="campo-v">${esc(c.lavoro || '—')}</div>
       <p><b>${r.officina ? 'Ore' : 'Tempo'}:</b> ${esc(c.tempo || '—')}${r.officina ? '' : ` · <b>Località:</b> ${esc(c.loc || '—')}`}</p>
-      <p><b>Pezzi</b></p><div class="campo-v">${esc(c.pezzi || '—')}</div>
+      <p><b>Pezzi</b></p>${(r.prezzi || []).length ? `<table class="tab-prezzi">${r.prezzi.map(x => `<tr><td>${esc(x.pezzo)}</td><td class="e">${x.prezzo === null ? '<b style="color:var(--rosso)">da prezzare</b>' : euro(x.prezzo)}</td></tr>`).join('')}
+        <tr class="tot"><td>Totale ricambi</td><td class="e">${euro(r.ric)}</td></tr></table>` : `<div class="campo-v">${esc(c.pezzi || '—')}</div>`}
       ${c.note ? `<p><b>Note</b></p><div class="campo-v">${esc(c.note)}</div>` : ''}
       ${r.foto.length ? `<p><b>Foto</b></p><div class="azioni">${r.foto.map(f => `<a class="btn sec piccolo" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.t.replace(/^Foto\s*/i, '') || 'foto')}</a>`).join('')}</div>` : ''}
       <div class="azioni" style="margin-top:14px">
