@@ -342,7 +342,7 @@ function cardPf(g) {
       const portale = g.modo === M.PORTALE;
       if (!g.stato) az.push(bt('fattura', 'Scrivi i dati della fattura', g, ''));
       // riepilogo in PDF prima di fare la fattura (totali da fatturare, controllo): non cambia lo stato
-      if (!g.stato) az.push(azBtn('pdf', g.pdf ? 'Rifai il PDF del riepilogo' : 'PDF del riepilogo', 'sec'));
+      if (!g.stato) az.push(azBtn('pdf', g.pdf ? 'Rifai il PDF dei rapportini' : 'PDF dei rapportini', 'sec'));
       if (g.stato === 'Fatturata' || (portale && g.stato === 'Documenti inviati')) {
         if (g.stato === 'Fatturata') {
           az.push(azBtn('mail', g.mailPronta ? 'Prepara di nuovo la mail' : 'Prepara la mail con fattura e rapportini', g.mailPronta ? 'sec' : ''));
@@ -382,16 +382,21 @@ function rigaFtPriv(x) {
   let azione;
   if (x.prob && x.delMese) azione = D.permessi === 'fatture' ? '<span class="sub">Lo sistemano Stefano o Enrico</span>' : `<button class="btn warn piccolo" data-a="wiz" data-pf="${esc(x.pf)}">Sistema (${x.prob})</button>`;
   else if (x.prob) azione = `<button class="btn warn piccolo" data-a="vaiMeseDi" data-m="${esc(x.mese)}">Sistema in ${esc(nomeMese(x.mese))}</button>`;
+  else if (x.datiKo) azione = aperto ? '' : `<button class="btn warn piccolo" data-a="ftPriv" data-id="${esc(x.id)}">Completa i dati</button>`;
   else azione = aperto ? '' : `<button class="btn ok piccolo" data-a="ftPriv" data-id="${esc(x.id)}">Fatturata</button>`;
   let h = `<div class="contesto" style="margin-top:8px"><div class="riga">
       <div><b>N. ${esc(x.num)}</b> · ${esc(x.data)}${x.delMese ? '' : ` · <b style="color:var(--rosso)">${esc(nomeMese(x.mese))}</b>`} · <b>${esc(x.cliente)}</b>
-        <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<b style="color:var(--rosso)">non scritti dal tecnico</b>'}</div>
+        <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<i>vuoto</i>'}</div>
+        ${x.datiKo ? `<div class="avviso" style="background:var(--rosso-soft);margin-top:4px"><b>Dati per la fattura da completare:</b> ${esc(x.datiKo)}. Chiamate il cliente e scriveteli qui prima di fatturare.</div>` : ''}
         <div class="sub">Dal registro: ${euro(x.tot)} + IVA (${euro(x.tot * 1.22)})${x.imp !== '' ? ` · incassati ${esc(x.imp)} €` : ''}</div>
         ${x.prob ? `<div class="sub" style="color:var(--rosso)"><b>${x.prob} ${x.prob === 1 ? 'cosa' : 'cose'} da sistemare</b> (es. prezzi dei pezzi): prima sistema, poi fattura.</div>` : ''}
       </div>
       <div style="text-align:right">${azione}${azione ? '<br>' : ''}<button class="link" data-a="apri" data-n="${x.n}">Apri</button></div>
     </div>`;
-  if (aperto) h += `<div class="form"><label for="fpNum">Numero fattura</label><input type="text" id="fpNum" autocomplete="off">
+  if (aperto && x.datiKo) h += `<div class="form"><label for="fpDati">Dati per la fattura <span class="sub">(nome o ragione sociale, partita IVA o codice fiscale, indirizzo, codice SDI o PEC)</span></label>
+    <textarea id="fpDati">${esc(x.dati)}</textarea>
+    <div class="azioni"><button class="btn ok" data-a="salvaDatiFt" data-id="${esc(x.id)}">Salva i dati</button><button class="link" data-a="chiudiForm">Annulla</button></div></div>`;
+  else if (aperto) h += `<div class="form"><label for="fpNum">Numero fattura</label><input type="text" id="fpNum" autocomplete="off">
     <label for="fpData">Data fattura</label><input type="date" id="fpData" value="${D.oggi}">
     <label for="fpImp">Importo totale della fattura (€)</label><div class="euro"><input type="text" inputmode="decimal" id="fpImp" placeholder="0,00"><span>€</span></div>
     <label for="fpNota">Nota (facoltativa)</label><input type="text" id="fpNota">
@@ -792,7 +797,14 @@ document.addEventListener('click', async ev => {
   if (a === 'form') { V.form = { pf: b.dataset.pf, az: b.dataset.az }; render(); const f = $('fNota'); if (f && b.dataset.az === 'correggere') f.focus(); return; }
   if (a === 'chiudiForm') { V.form = null; V.ftPriv = null; return render(); }
   if (a === 'vaiMeseDi') return caricaMese(b.dataset.m);
-  if (a === 'ftPriv') { V.ftPriv = b.dataset.id; render(); const f = $('fpNum'); if (f) f.focus(); return; }
+  if (a === 'ftPriv') { V.ftPriv = b.dataset.id; render(); const f = $('fpNum') || $('fpDati'); if (f) f.focus(); return; }
+  if (a === 'salvaDatiFt') {
+    const t = $('fpDati').value.trim();
+    if (!t) return toast('Scrivi i dati per la fattura', 'err');
+    const ok = await salva('uffFatturaPrivato', [b.dataset.id, { soloDati: true, datiFt: t }], 'Dati per la fattura salvati');
+    if (ok) { const x = (D.privatiFt || []).find(y => y.id === b.dataset.id); V.ftPriv = x && x.datiKo ? b.dataset.id : null; if (x && x.datiKo) toast('Salvati, ma ' + x.datiKo, 'err'); }
+    return render();
+  }
   if (a === 'salvaFtPriv') {
     const imp = leggiEuro($('fpImp').value);
     if (!$('fpNum').value.trim()) return toast('Scrivi il numero della fattura', 'err');
