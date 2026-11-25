@@ -756,7 +756,8 @@ function vistaAvvio() {
     <input class="inp" id="pin" type="tel" inputmode="numeric" autocomplete="off" placeholder="Codice" value="${esc(UI.pinTmp)}" data-b="UI.pinTmp" style="font-size:24px;letter-spacing:.2em">
     ${UI.err ? `<div class="warn">${esc(UI.err)}</div>` : ''}
     <button class="big-btn" data-a="accedi">${CORNERS}Entra</button></div>`;
-  if (UI.phase === 'chi' && AUTH && AUTH.tablet) return `<div class="center"><div><div class="kicker">Tablet di officina</div><h2 class="big">Chi sta lavorando?</h2></div>
+  if (UI.phase === 'chi' && AUTH && AUTH.tablet) return `<div class="center"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div class="kicker">Tablet di officina</div><h2 class="big">Chi sta lavorando?</h2></div>
+    <button class="aiuto-btn" data-a="ricarica" aria-label="Aggiorna l'app" title="Aggiorna l'app" style="font-size:22px">↻</button></div>
     <div class="grid1">${UI.tecnici.map(t => `<button class="opt row" data-a="tecnico" data-v="${esc(t)}" style="min-height:72px;font-size:24px">${esc(t)}</button>`).join('')}</div>
     <p style="margin:0;color:var(--color-neutral-800)">Il lavoro e le ore vanno a chi scegli. Quando hai finito, il prossimo sceglie il suo nome.</p></div>`;
   if (UI.phase === 'chi') return `<div class="center"><div><div class="kicker">Rapportino d'intervento</div><h2 class="big">Chi sei?</h2></div>
