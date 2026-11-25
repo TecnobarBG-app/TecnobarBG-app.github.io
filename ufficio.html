@@ -318,6 +318,8 @@ function cardPf(g) {
       // email (e portale per Essse): fattura → mail con fattura e rapportini (+ caricamento sul portale)
       const portale = g.modo === M.PORTALE;
       if (!g.stato) az.push(bt('fattura', 'Scrivi i dati della fattura', g, ''));
+      // riepilogo in PDF prima di fare la fattura (totali da fatturare, controllo): non cambia lo stato
+      if (!g.stato) az.push(azBtn('pdf', g.pdf ? 'Rifai il PDF del riepilogo' : 'PDF del riepilogo', 'sec'));
       if (g.stato === 'Fatturata' || (portale && g.stato === 'Documenti inviati')) {
         if (g.stato === 'Fatturata') {
           az.push(azBtn('mail', g.mailPronta ? 'Prepara di nuovo la mail' : 'Prepara la mail con fattura e rapportini', g.mailPronta ? 'sec' : ''));
@@ -682,7 +684,7 @@ document.addEventListener('click', async ev => {
   if (a === 'pdf') {
     const gp = D.proforma.find(x => x.key === b.dataset.pf);
     $('busy').textContent = 'Preparo il PDF… (può volerci qualche minuto)';
-    await salva('uffPdf', [gp.torr, gp.ditta], 'PDF pronto');
+    await salva('uffPdf', [gp.torr, gp.ditta], 'PDF pronto: lo apri dal link «PDF rapportini»');
     $('busy').textContent = 'Salvo…';
     return;
   }
