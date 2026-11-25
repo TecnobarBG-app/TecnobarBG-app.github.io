@@ -25,7 +25,9 @@ h1, h2, h3 { font-family: "Barlow Condensed", system-ui, sans-serif; font-weight
 .wrap { max-width: 860px; margin: 0 auto; padding: 16px 16px 80px; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 header h1 { font-size: 34px; }
-.chi { color: var(--muted); font-size: 15px; }
+.chi { color: var(--muted); font-size: 15px; display: flex; align-items: center; gap: 10px; }
+.ricarica { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--text); background: var(--card); color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; line-height: 1; }
+.ricarica:hover { border-color: var(--accent); color: var(--accent); }
 .mesebar { display: flex; align-items: center; gap: 8px; margin: 6px 0 16px; }
 .mesebar select { font: inherit; font-size: 22px; font-weight: 700; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); text-transform: capitalize; min-width: 0; flex: 1; max-width: 340px; }
 .btn { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 12px 18px; cursor: pointer; background: var(--accent); color: #fff; min-height: 48px; }
@@ -567,7 +569,7 @@ function vicine(nome) {
 }
 
 /* ================= CERCA E CORREGGI UN RAPPORTINO ================= */
-const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : on === 'crusc' ? 'Cruscotto' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)}</span></header>
+const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : on === 'crusc' ? 'Cruscotto' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)} <button class="ricarica" data-a="ricarica" aria-label="Aggiorna l'app" title="Aggiorna l'app">↻</button></span></header>
   <div class="tabs"><button class="${on === 'mese' ? 'on' : ''}" data-a="vaiMese">Fine mese</button><button class="${on === 'cerca' ? 'on' : ''}" data-a="vaiCerca">Cerca rapportino</button>${D.permessi === 'fatture' ? '' : `<button class="${on === 'crusc' ? 'on' : ''}" data-a="vaiCrusc">Cruscotto</button>`}</div>`;
 /* ================= CRUSCOTTO ================= */
 // Si carica solo aprendo la scheda (una lettura del registro), poi tutto si calcola qui: cambiare mese o filtro è immediato.
@@ -758,6 +760,7 @@ document.addEventListener('click', async ev => {
   if (a === 'esci') { salvaCod(''); K = ''; D = null; return vistaCodice(false); }
   if (a === 'vaiMese') { V.vista = 'mese'; if (C.sporco) { C.sporco = false; return caricaMese(D.mese); } return render(); }
   if (a === 'vaiCerca') { V.vista = 'cerca'; render(); if (!C.ris) cerca(); return; }
+  if (a === 'ricarica') { document.body.style.opacity = '.5'; try { location.reload(); } catch (e) { location.href = location.href; } return; }
   if (a === 'vaiCrusc') { V.vista = 'crusc'; render(); if (!Q.dati && !Q.carico) caricaCrusc(); return; }
   if (a === 'crAggiorna') return caricaCrusc();
   if (a === 'crMese') { Q.mese = spostaMese(Q.mese, Number(b.dataset.d)); return render(); }
