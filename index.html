@@ -495,7 +495,7 @@ const K_AUTH = 'rapportino-accesso-v1', K_DRAFT = 'rapportino-bozza-v1', K_BOZZE
 const GIORNI_BOZZA_VECCHIA = 3;
 const SAVE = ['screen', 'mode', 'data', 'torref', 'torrNome', 'ditta', 'cliente', 'ci', 'firmatario', 'intervento', 'pag', 'importo', 'fattura',
   'localita', 'apps', 'minutes', 'altro', 'lavoro', 'pezzi', 'ricevuto', 'note', 'timbro', 'firma', 'photos',
-  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi', 'ciNonSo'];
+  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi', 'ciNonSo', 'verificheNo'];
 
 const SVG = {
   back: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -569,7 +569,7 @@ function initState() {
     localita: null, locaQ: '', apps: Object.fromEntries(APPS.map(a => [a.k, blankApp()])),
     minutes: 0, altro: false, lavoro: '', pezzi: [], sheet: false, pezzoQ: '', ricevuto: '', note: '', timbro: 'foto', firma: '', photos: {},
     oTorref: '', oTorrNome: '', oCliente: null, oClienteQ: '', oDitta: '', oPag: '', oImporto: '', oFattura: '', oTipo: '', oMarca: '', oMatricola: '', oData: '', checks: {},
-    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false, ciNonSo: false
+    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false, ciNonSo: false, verificheNo: false
   };
 }
 function set(p, rerender = true) { Object.assign(S, p); salvaBozza(); if (rerender) render(); }
@@ -802,6 +802,12 @@ function vPopup() {
     <div class="pop-b">Se hai cambiato qualcosa, anche solo una guarnizione, aggiungilo con <b>«Aggiungi pezzo»</b>.<br><br><b>Scriverlo nel lavoro svolto non basta: il pezzo non viene fatturato.</b></div>
     <button class="big-btn rosso" data-a="pop-pezzo">${SVG.plus(26)} Aggiungi pezzo</button>
     <button class="big-btn sec2" data-a="senza-pezzi">Non ho cambiato nessun pezzo</button></div></div>`;
+  if (UI.popup === 'verifiche') { const nm = verificheMancanti(); return `<div class="pop-bg"><div class="pop arancio" role="alertdialog" aria-modal="true">
+    <div class="pop-ico">?</div>
+    <div class="pop-t">Sicuro di non doverle spuntare tutte?</div>
+    <div class="pop-b">Non hai spuntato ${nm.length === 1 ? 'questa verifica' : 'queste ' + nm.length + ' verifiche'}:<br><b>${nm.map(esc).join('<br>')}</b><br><br>Se vai avanti, nel rapportino l'ufficio vede quali non sono state fatte.</div>
+    <button class="big-btn" data-a="pop-ver-torno">Torno a spuntarle</button>
+    <button class="big-btn sec2" data-a="pop-ver-avanti">Sì, vai avanti lo stesso</button></div></div>`; }
   if (UI.popup === 'ci') return `<div class="pop-bg"><div class="pop arancio" role="alertdialog" aria-modal="true">
     <div class="pop-ico">?</div>
     <div class="pop-t">Sicuro di non sapere il codice cliente Segafredo?</div>
@@ -810,6 +816,7 @@ function vPopup() {
     <button class="big-btn sec2" data-a="pop-ci-nonso">Non lo so, vai avanti</button></div></div>`;
   return '';
 }
+const verificheMancanti = () => verificheTipo().filter((_, i) => !S.checks[S.oTipo + '|' + i]);
 const ciValido = () => (S.cliente && !S.cliente.nuovo && !S.ciSblocca && /^CI\d{6}$/.test(S.cliente.ci || '')) || /^\d{6}$/.test(S.ci || '');
 
 /* ---------- Inizio ---------- */
@@ -1237,7 +1244,7 @@ function pSuggOCli() {
 function vVerifiche() {
   const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length;
   return `<div class="pad" style="gap:24px"><div><div class="kicker">${esc(S.oTipo)}</div>
-    <p style="margin:6px 0 0;font-size:17px;color:var(--color-neutral-800)">Spunta ogni verifica dopo averla fatta. Si può inviare solo con tutte le spunte.</p></div>
+    <p style="margin:6px 0 0;font-size:17px;color:var(--color-neutral-800)">Spunta ogni verifica dopo averla fatta. Se non le fai tutte, l'app ti chiede conferma e l'ufficio vede quali mancano.</p></div>
     <div class="grid1">${ch.map((l, i) => { const d = !!S.checks[S.oTipo + '|' + i]; return `<button class="check ${d ? 'on' : ''}" data-a="check" data-v="${i}"><span class="box">${d ? SVG.check(24, 3) : ''}</span><span class="l">${esc(l)}</span></button>`; }).join('')}</div>
     <div style="font-family:var(--font-heading);font-weight:600;font-size:22px;color:${done === ch.length ? 'var(--color-accent-800)' : 'var(--color-neutral-800)'}">${done} di ${ch.length} fatte</div></div>`;
 }
@@ -1260,7 +1267,10 @@ function sezioni() {
     sec('Macchina', 'macchina', rows);
     lav.push(R('Note per l\'ufficio', S.note.trim(), false));
     sec('Lavoro e pezzi', 'lavoro', lav);
-    if (ch.length) sec('Verifiche', 'verifiche', [{ ...R('Fatte', done + ' di ' + ch.length), cls: done === ch.length ? '' : 'miss', miss: done < ch.length }]);
+    if (ch.length) {
+      const nonFatte = verificheMancanti(), manca = nonFatte.length > 0 && !S.verificheNo;
+      sec('Verifiche', 'verifiche', [{ k: 'Fatte', v: done + ' di ' + ch.length + (nonFatte.length ? '\nNon spuntate: ' + nonFatte.join('; ') + (S.verificheNo ? '\n(confermato: va avanti lo stesso)' : '') : ''), cls: manca ? 'miss' : nonFatte.length ? 'dim' : '', miss: manca }]);
+    }
     return out;
   }
   const cli = [R('Data', dShort), R('Torrefazione', torrName(S.torref, S.torrNome)), R('Locale', S.cliente && S.cliente.nome)];
@@ -1337,7 +1347,7 @@ function vFooter(sc, warn) {
   let label = S.fromSummary ? 'Torna al riepilogo' : 'Avanti', dis = false, a = 'avanti', manca = false, vai = '';
   const mm = ['riepilogo', 'verifiche'].includes(sc) ? [] : missingFor(sc);
   if (mm.length) { manca = true; a = 'vai-mancante'; label = 'Manca: ' + mm[0].l + (mm.length > 1 ? ` (+${mm.length - 1})` : ''); vai = S.fromSummary ? 'Torna al riepilogo lo stesso' : 'Vai avanti lo stesso (lo completi dopo)'; }
-  if (sc === 'verifiche') { const ch = verificheTipo(); const done = ch.filter((_, i) => S.checks[S.oTipo + '|' + i]).length; if (done < ch.length) { label = `Spunta tutte le verifiche (${done}/${ch.length})`; dis = true; } }
+  if (sc === 'verifiche' && !S.fromSummary) { const ch = verificheTipo(), nm = verificheMancanti().length; if (nm) label = `Avanti (${ch.length - nm} di ${ch.length} spuntate)`; }
   if (sc === 'riepilogo') {
     const missing = []; sezioni().forEach(x => x.rows.forEach(r => { if (r.miss) missing.push(r.k); }));
     const inCarico = Object.values(S.photos).some(p => p && p.st === 'up');
@@ -1446,11 +1456,16 @@ const A = {
   },
   'avanti-forza': () => { S.warned[S.screen] = true; A.avanti(true); },
   avanti: forza => {
-    const m = missingFor(S.screen);
+    const m = S.screen === 'verifiche' ? [] : missingFor(S.screen);   // verifiche: niente blocco, chiedo conferma sotto
     if (m.length && !forza) return A['vai-mancante']();
     // dal cliente senza pezzi: una volta chiedo se se li è dimenticati (capita di scriverli solo nella descrizione)
-    if (S.screen === 'lavoro' && S.mode === 'cliente' && !S.pezzi.length && !S.senzaPezzi) {
+    if (S.screen === 'lavoro' && !S.pezzi.length && !S.senzaPezzi) {
       S.warned.pezzi = true; UI.popup = 'pezzi'; UI.popForza = !!forza; render();
+      return;
+    }
+    // officina: verifiche non tutte spuntate → chiedo conferma (una volta per rapportino)
+    if (S.screen === 'verifiche' && !S.verificheNo && verificheMancanti().length) {
+      UI.popup = 'verifiche'; UI.popForza = true; render();
       return;
     }
     // Segafredo senza codice cliente: chiedo se è sicuro di non saperlo (una volta per rapportino)
@@ -1539,6 +1554,8 @@ const A = {
     const el = document.getElementById('q-ci'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('q', 'flash'); }
     setTimeout(() => { const i = document.getElementById('in-ci'); if (i) i.focus({ preventScroll: true }); }, 350);
   },
+  'pop-ver-torno': () => { UI.popup = ''; render(); },
+  'pop-ver-avanti': () => { UI.popup = ''; S.verificheNo = true; A.avanti(true); },
   'pop-ci-nonso': () => { UI.popup = ''; S.ciNonSo = true; A.avanti(UI.popForza); },
   'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
   // chiusura
@@ -1834,7 +1851,8 @@ async function invia() {
     if (isOff) Object.assign(r, {
       torrefazione: torrName(S.oTorref, S.oTorrNome), ditta: S.oDitta, cliente: cliRec(S.oCliente),
       pag: S.oPag, importo: S.oImporto, fattura: S.oFattura, tipo: S.oTipo, marca: S.oMarca, matricola: S.oMatricola, dataMacc: S.oData,
-      fotoTarghetta: (S.photos.targhetta || {}).url || '', verifiche: verificheTipo().filter((_, i) => S.checks[S.oTipo + '|' + i])
+      fotoTarghetta: (S.photos.targhetta || {}).url || '', verifiche: verificheTipo().filter((_, i) => S.checks[S.oTipo + '|' + i]),
+      note: [r.note, verificheMancanti().length ? 'VERIFICHE NON FATTE: ' + verificheMancanti().join('; ') : ''].filter(x => String(x || '').trim()).join('\n')
     });
     else Object.assign(r, {
       torrefazione: torrName(S.torref, S.torrNome), ditta: S.ditta, cliente: cliRec(S.cliente),

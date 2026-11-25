@@ -102,6 +102,23 @@ tr.prob td { background: var(--rosso-soft); }
 dl.tutto { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 4px 12px; font-size: 15px; }
 dl.tutto dt { color: var(--muted); } dl.tutto dd { margin: 0; white-space: pre-wrap; word-break: break-word; }
 textarea { min-height: 90px; resize: vertical; }
+/* cruscotto */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.tile .tv { font-family: "Barlow Condensed", system-ui, sans-serif; font-size: 30px; font-weight: 600; line-height: 1.1; margin: 2px 0; }
+.tile.grande { grid-column: span 2; border-left: 6px solid var(--accent); } .tile.grande .tv { font-size: 40px; }
+.tile.att { background: var(--arancio-soft); border-color: var(--arancio); }
+@media (max-width: 520px) { .tile.grande { grid-column: span 2; } .tile.grande .tv { font-size: 34px; } .tile .tv { font-size: 26px; } }
+.stack { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: var(--grigio-soft); margin: 10px 0 8px; }
+.leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; } .leg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.graf { width: 100%; height: auto; display: block; margin: 8px 0; }
+.seg { display: inline-flex; border: 2px solid var(--accent); border-radius: 10px; overflow: hidden; }
+.seg button { font: inherit; font-weight: 700; font-size: 15px; border: 0; background: var(--card); color: var(--accent); padding: 8px 12px; cursor: pointer; }
+.seg button.on { background: var(--accent); color: #fff; }
+.tab-cr th.e { text-align: right; }
+.tab-cr tr[data-a] { cursor: pointer; } .tab-cr tr[data-a]:hover td { background: var(--accent-soft); } .tab-cr tr.on td { background: var(--blu-soft); }
+.mini { height: 8px; background: var(--grigio-soft); border-radius: 99px; overflow: hidden; margin-top: 6px; } .mini div { height: 100%; background: var(--accent); }
+.filtro-cr { background: var(--blu-soft); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
 @media (max-width: 520px) { .filtri { grid-template-columns: 1fr; } }
 #busy { position: fixed; inset: 0; background: rgba(242,242,243,.6); display: none; align-items: center; justify-content: center; z-index: 40; font-size: 22px; font-weight: 700; }
 #busy.on { display: flex; }
@@ -550,8 +567,99 @@ function vicine(nome) {
 }
 
 /* ================= CERCA E CORREGGI UN RAPPORTINO ================= */
-const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)}</span></header>
-  <div class="tabs"><button class="${on === 'mese' ? 'on' : ''}" data-a="vaiMese">Fine mese</button><button class="${on === 'cerca' ? 'on' : ''}" data-a="vaiCerca">Cerca rapportino</button></div>`;
+const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : on === 'crusc' ? 'Cruscotto' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)}</span></header>
+  <div class="tabs"><button class="${on === 'mese' ? 'on' : ''}" data-a="vaiMese">Fine mese</button><button class="${on === 'cerca' ? 'on' : ''}" data-a="vaiCerca">Cerca rapportino</button>${D.permessi === 'fatture' ? '' : `<button class="${on === 'crusc' ? 'on' : ''}" data-a="vaiCrusc">Cruscotto</button>`}</div>`;
+/* ================= CRUSCOTTO ================= */
+// Si carica solo aprendo la scheda (una lettura del registro), poi tutto si calcola qui: cambiare mese o filtro è immediato.
+let Q = { dati: null, carico: false, err: '', mese: '', filtro: null, per: 'torr' };
+const QI = { torr: 1, ditta: 2, tec: 3 };
+const QN = { torr: 'Torrefazione', tec: 'Tecnico', ditta: 'Ditta' };
+async function caricaCrusc() {
+  Q.carico = true; Q.err = ''; render();
+  try { Q.dati = await run('uffCruscotto', K); if (!Q.mese) Q.mese = Q.dati.oggi; }
+  catch (e) { Q.err = errMsg(e); }
+  Q.carico = false; render();
+}
+function aggCr(rr) {
+  const a = { n: 0, off: 0, tot: 0, chiam: 0, mano: 0, ric: 0, ore: 0, imp: 0, daprez: 0, chiamVer: 0, uscite: 0, costo: 0, prezzoNoto: 0, nPz: 0, nNoti: 0 };
+  rr.forEach(r => {
+    a.n++; a.off += r[4]; a.tot += r[5];
+    if (r[6] < 0) a.chiamVer++; else { a.chiam += r[6]; if (r[6] > 0) a.uscite++; }
+    a.mano += r[7]; a.ric += r[8]; a.ore += r[9]; a.imp += r[10]; a.daprez += r[11];
+    a.costo += r[12]; a.prezzoNoto += r[13]; a.nPz += r[14]; a.nNoti += r[15];
+  });
+  return a;
+}
+const euro0 = n => Math.round(Number(n) || 0).toLocaleString('de-DE') + ' €';   // 4.608 € (in italiano 4 cifre restano senza punto)
+const meseCorto = ym => { const [a, m] = ym.split('-').map(Number); return new Date(a, m - 1, 1).toLocaleDateString('it-IT', { month: 'short' }).replace('.', ''); };
+function delta(ora, prima, etichetta) {
+  if (!prima) return `<div class="sub">${esc(etichetta)}: —</div>`;
+  const p = Math.round((ora - prima) / Math.abs(prima) * 100);
+  return `<div class="sub">${esc(etichetta)}: <b style="color:${p >= 0 ? 'var(--verde)' : 'var(--rosso)'}">${p >= 0 ? '+' : ''}${p}%</b></div>`;
+}
+function vistaCruscotto() {
+  let h = schede('crusc');
+  if (Q.err) return h + `<div class="card rosso"><h2>Cruscotto non disponibile</h2><p>${esc(Q.err)}</p><button class="btn sec piccolo" data-a="crAggiorna">Riprova</button></div>`;
+  if (!Q.dati) return h + '<p>Leggo i numeri dal registro…</p>';
+  const M = Q.mese, f = Q.filtro;
+  const tutte = Q.dati.righe.filter(r => !f || r[QI[f.t]] === f.v);
+  const delMese = ym => tutte.filter(r => r[0] === ym);
+  const anno = M.slice(0, 4);
+  const ytd = tutte.filter(r => r[0] >= anno + '-01' && r[0] <= M);
+  const a = aggCr(delMese(M)), p = aggCr(delMese(spostaMese(M, -1))), y = aggCr(delMese(spostaMese(M, -12))), t = aggCr(ytd);
+  h += `<div class="mesebar"><button class="btn sec freccia" data-a="crMese" data-d="-1" aria-label="Mese prima">‹</button>
+    <div style="flex:1;text-align:center;font-size:24px;font-weight:700;text-transform:capitalize">${esc(nomeMese(M))}</div>
+    <button class="btn sec freccia" data-a="crMese" data-d="1" aria-label="Mese dopo">›</button></div>`;
+  if (f) h += `<div class="filtro-cr">Solo ${esc(QN[f.t].toLowerCase())}: <b>${esc(f.v)}</b> <button class="link" data-a="crTogli">togli il filtro ✕</button></div>`;
+  const tile = (tit, val, sotto, cls) => `<div class="tile ${cls || ''}"><div class="sub">${tit}</div><div class="tv">${val}</div>${sotto || ''}</div>`;
+  const nomeP = nomeMese(spostaMese(M, -1)).split(' ')[0];
+  const margine = a.prezzoNoto - a.costo;
+  h += `<div class="tiles">
+    ${tile('Fatturato del mese', euro0(a.tot), delta(a.tot, p.tot, 'vs ' + nomeP) + delta(a.tot, y.tot, 'vs un anno fa'), 'grande')}
+    ${tile('Interventi', a.n, `<div class="sub">${a.n - a.off} dal cliente · ${a.off} in officina</div>` + delta(a.n, p.n, 'vs ' + nomeP))}
+    ${tile('Valore medio intervento', a.n ? euro0(a.tot / a.n) : '—', delta(a.n ? a.tot / a.n : 0, p.n ? p.tot / p.n : 0, 'vs ' + nomeP))}
+    ${tile('Fatturato per ora di manodopera', a.ore ? euro0(a.tot / a.ore) : '—', `<div class="sub">${String(Math.round(a.ore * 100) / 100).replace('.', ',')} ore fatturate</div>`)}
+    ${tile('Margine ricambi stimato', a.nNoti ? euro0(margine) : '—', `<div class="sub">${a.nPz ? Math.round(a.nNoti / a.nPz * 100) : 0}% dei pezzi con costo noto</div>`)}
+    ${tile('Incassato da privati', euro0(a.imp), '')}
+    ${a.daprez || a.chiamVer ? tile('Da sistemare', `${a.daprez + a.chiamVer}`, `<div class="sub">${a.daprez} pezzi da prezzare · ${a.chiamVer} chiamate senza tariffa</div>`, 'att') : ''}
+  </div>`;
+  // composizione del fatturato
+  if (a.tot > 0) {
+    const pc = x => Math.max(0, x / a.tot * 100);
+    h += `<div class="card" style="border-left-color:var(--accent)"><h2 style="font-size:22px">Di cosa è fatto il fatturato</h2>
+      <div class="stack"><div style="width:${pc(a.chiam)}%;background:var(--accent)"></div><div style="width:${pc(a.mano)}%;background:var(--verde)"></div><div style="width:${pc(a.ric)}%;background:var(--arancio)"></div></div>
+      <div class="leg"><span><i style="background:var(--accent)"></i>Chiamate ${euro0(a.chiam)} <small>(${a.uscite} uscite)</small></span><span><i style="background:var(--verde)"></i>Manodopera ${euro0(a.mano)}</span><span><i style="background:var(--arancio)"></i>Ricambi ${euro0(a.ric)}</span></div></div>`;
+  }
+  // ultimi 12 mesi: tocca una barra per vedere quel mese
+  const mesi = []; for (let i = 11; i >= 0; i--) mesi.push(spostaMese(M, -i));
+  const vals = mesi.map(m => aggCr(delMese(m)).tot), max = Math.max(...vals, 1);
+  const W = 600, H = 170, bw = W / 12;
+  h += `<div class="card" style="border-left-color:var(--accent)"><h2 style="font-size:22px">Ultimi 12 mesi</h2><div class="sub">Fatturato per mese. Tocca una barra per vedere quel mese.</div>
+    <svg viewBox="0 0 ${W} ${H + 24}" class="graf" role="img" aria-label="Fatturato ultimi 12 mesi">${mesi.map((m, i) => {
+      const v = vals[i], bh = v ? Math.max(3, v / max * (H - 22)) : 0, x = i * bw, sel = m === M;
+      return `<g data-a="crBar" data-m="${m}" style="cursor:pointer"><title>${esc(nomeMese(m))}: ${euro0(v)}</title>
+        <rect x="${x}" y="0" width="${bw}" height="${H + 24}" fill="transparent"/>
+        <rect x="${x + 6}" y="${H - bh}" width="${bw - 12}" height="${bh}" rx="3" fill="${sel ? 'var(--accent)' : '#b9cde2'}"/>
+        ${sel && v ? `<text x="${x + bw / 2}" y="${H - bh - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)">${euro0(v)}</text>` : ''}
+        <text x="${x + bw / 2}" y="${H + 17}" text-anchor="middle" font-size="13" fill="${sel ? 'var(--text)' : 'var(--muted)'}" font-weight="${sel ? 700 : 400}">${meseCorto(m)}</text></g>`;
+    }).join('')}</svg>
+    <div class="sub">Da gennaio ${anno}: <b>${euro0(t.tot)}</b> · ${t.n} interventi · ricambi ${euro0(t.ric)}</div></div>`;
+  // tabella per torrefazione / tecnico / ditta: tocca una riga per filtrare tutto il cruscotto
+  const per = Q.per, ix = QI[per];
+  const nomi = [...new Set(ytd.map(r => r[ix]).filter(Boolean))];
+  const gr = nomi.map(nm => ({ nm, m: aggCr(delMese(M).filter(r => r[ix] === nm)), y: aggCr(ytd.filter(r => r[ix] === nm)) })).sort((x, z) => z.y.tot - x.y.tot);
+  const totY = gr.reduce((s, g) => s + g.y.tot, 0) || 1;
+  h += `<div class="card" style="border-left-color:var(--accent)"><div class="riga"><h2 style="font-size:22px">Chi fa il fatturato</h2>
+    <div class="seg">${['torr', 'tec', 'ditta'].map(k => `<button class="${per === k ? 'on' : ''}" data-a="crPer" data-v="${k}">${QN[k]}</button>`).join('')}</div></div>
+    ${gr.length ? `<table class="tab-cr"><tr><th>${QN[per]}</th><th class="e">Mese</th><th class="e">Da gennaio</th><th style="width:28%"></th></tr>
+    ${gr.map(g => `<tr data-a="crFiltro" data-t="${per}" data-v="${esc(g.nm)}" class="${f && f.t === per && f.v === g.nm ? 'on' : ''}"><td><b>${esc(g.nm)}</b><div class="sub">${g.m.n} interventi nel mese</div></td>
+      <td class="e">${euro0(g.m.tot)}</td><td class="e">${euro0(g.y.tot)}</td>
+      <td><div class="mini"><div style="width:${g.y.tot / totY * 100}%"></div></div><div class="sub">${Math.round(g.y.tot / totY * 100)}%</div></td></tr>`).join('')}</table>
+    <div class="sub">Tocca una riga per vedere tutto il cruscotto solo per quella.</div>` : '<p class="sub">Nessun intervento da gennaio.</p>'}</div>`;
+  h += `<p class="piede">Numeri dei rapportini (mese di competenza, IVA esclusa), letti alle ${esc(Q.dati.letto)}. Il margine ricambi conta solo i pezzi riconosciuti in «Pezzi abituali». <button class="link" data-a="crAggiorna">Aggiorna</button></p>`;
+  return h;
+}
+
 
 function vistaCerca() {
   const q = C.q, r = C.ris;
@@ -650,6 +758,13 @@ document.addEventListener('click', async ev => {
   if (a === 'esci') { salvaCod(''); K = ''; D = null; return vistaCodice(false); }
   if (a === 'vaiMese') { V.vista = 'mese'; if (C.sporco) { C.sporco = false; return caricaMese(D.mese); } return render(); }
   if (a === 'vaiCerca') { V.vista = 'cerca'; render(); if (!C.ris) cerca(); return; }
+  if (a === 'vaiCrusc') { V.vista = 'crusc'; render(); if (!Q.dati && !Q.carico) caricaCrusc(); return; }
+  if (a === 'crAggiorna') return caricaCrusc();
+  if (a === 'crMese') { Q.mese = spostaMese(Q.mese, Number(b.dataset.d)); return render(); }
+  if (a === 'crBar') { Q.mese = b.dataset.m; return render(); }
+  if (a === 'crPer') { Q.per = b.dataset.v; return render(); }
+  if (a === 'crFiltro') { Q.filtro = Q.filtro && Q.filtro.t === b.dataset.t && Q.filtro.v === b.dataset.v ? null : { t: b.dataset.t, v: b.dataset.v }; return render(); }
+  if (a === 'crTogli') { Q.filtro = null; return render(); }
   if (a === 'cerca') return cerca();
   if (a === 'apri') { ev.stopPropagation(); return apri(b.dataset.n, V.vista === 'mese' ? 'mese' : 'cerca'); }
   if (a === 'indietro') { V.vista = C.da === 'mese' ? 'mese' : 'cerca'; if (C.sporco) { C.sporco = false; if (V.vista === 'mese') return caricaMese(D.mese); return cerca(); } return render(); }
@@ -788,7 +903,7 @@ document.addEventListener('keydown', ev => {
 
 function render() {
   if (!D) return;
-  $('app').innerHTML = V.vista === 'wiz' ? vistaWiz() : V.vista === 'cerca' ? vistaCerca() : V.vista === 'rap' ? vistaRap() : vistaMese();
+  $('app').innerHTML = V.vista === 'wiz' ? vistaWiz() : V.vista === 'cerca' ? vistaCerca() : V.vista === 'crusc' ? vistaCruscotto() : V.vista === 'rap' ? vistaRap() : vistaMese();
   const primo = document.querySelector('.domanda input[type=text]');
   if (primo && !primo.value && window.innerWidth > 700) primo.focus();
 }
