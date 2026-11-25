@@ -449,6 +449,29 @@ h2.big{font-family:var(--font-heading);font-weight:600;font-size:38px;margin:4px
 .msg-ok{color:var(--color-accent-800);font-weight:600;font-size:15px;margin-top:6px}.msg-err{color:#b3261e;font-weight:600;font-size:15px;margin-top:6px}
 .dup{border:2px solid #b3261e;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 .dup p{margin:0;font-size:16px;font-weight:600;color:#7a1610}
+/* finestre di avviso (pezzi non inseriti, codice Segafredo) */
+.pop-bg{position:fixed;inset:0;z-index:40;background:rgba(20,20,22,.62);display:flex;align-items:center;justify-content:center;padding:14px}
+.pop{background:#fff;border:5px solid #b42318;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:22px 18px 18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.pop.arancio{border-color:#d97706}
+.pop-ico{width:70px;height:70px;border-radius:50%;background:#b42318;color:#fff;font-family:var(--font-heading);font-size:50px;font-weight:700;display:flex;align-items:center;justify-content:center;align-self:center;animation:popin .5s ease 2}
+.pop.arancio .pop-ico{background:#d97706}
+@keyframes popin{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.pop-t{font-family:var(--font-heading);font-weight:600;font-size:29px;line-height:1.08;text-align:center;color:#7a1610}
+.pop.arancio .pop-t{color:#8a4b06}
+.pop-b{font-size:18px;line-height:1.4}
+.pop .big-btn{min-height:64px;font-size:22px;display:flex;align-items:center;justify-content:center;gap:8px}
+.pop .big-btn.rosso{background:#b42318;border-color:#b42318}
+/* fotocamera dentro l'app */
+.cam-full{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column}
+.cam-full video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000}
+.cam-msg{position:absolute;left:0;right:0;top:40%;text-align:center;color:#fff;font-size:20px}
+.cam-b{flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+.cam-b .big-btn{min-height:56px;font-size:19px}
+.cam-scatta{width:84px;height:84px;border-radius:50%;border:6px solid #fff;background:#fff;box-shadow:inset 0 0 0 4px #000}
+.cam-scatta:active{background:#ccc}
+/* senza connessione */
+.offline{flex:none;background:#3b3b3e;color:#fff;font-size:15px;font-weight:600;line-height:1.3;padding:8px 14px}
+.foto-alt{flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -472,7 +495,7 @@ const K_AUTH = 'rapportino-accesso-v1', K_DRAFT = 'rapportino-bozza-v1', K_BOZZE
 const GIORNI_BOZZA_VECCHIA = 3;
 const SAVE = ['screen', 'mode', 'data', 'torref', 'torrNome', 'ditta', 'cliente', 'ci', 'firmatario', 'intervento', 'pag', 'importo', 'fattura',
   'localita', 'apps', 'minutes', 'altro', 'lavoro', 'pezzi', 'ricevuto', 'note', 'timbro', 'firma', 'photos',
-  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi'];
+  'oTorref', 'oTorrNome', 'oCliente', 'oDitta', 'oPag', 'oImporto', 'oFattura', 'oTipo', 'oMarca', 'oMatricola', 'oData', 'checks', 'uid', 'carta', 'lavoroId', 'prima', 'sessioni', 'senzaPezzi', 'ciNonSo'];
 
 const SVG = {
   back: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -546,7 +569,7 @@ function initState() {
     localita: null, locaQ: '', apps: Object.fromEntries(APPS.map(a => [a.k, blankApp()])),
     minutes: 0, altro: false, lavoro: '', pezzi: [], sheet: false, pezzoQ: '', ricevuto: '', note: '', timbro: 'foto', firma: '', photos: {},
     oTorref: '', oTorrNome: '', oCliente: null, oClienteQ: '', oDitta: '', oPag: '', oImporto: '', oFattura: '', oTipo: '', oMarca: '', oMatricola: '', oData: '', checks: {},
-    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false
+    fromSummary: false, warned: {}, expanded: {}, savedAt: '', drafts: [], uid: uid(), esito: null, carta: false, lavoroId: '', prima: 0, sessioni: [], senzaPezzi: false, ciNonSo: false
   };
 }
 function set(p, rerender = true) { Object.assign(S, p); salvaBozza(); if (rerender) render(); }
@@ -658,10 +681,11 @@ function steps(s = S) {
 const locLabel = l => !l ? '' : l.altra ? 'Altra: ' + (l.libera || '(scrivila)') : (l.c ? l.n + ' · ' + l.c : l.n);
 const cliSub = c => [c.via, [c.fraz, c.loc].filter(Boolean).join(' – ')].filter(Boolean).join(', ') || 'Indirizzo da completare';
 const ph = k => (S.photos[k] && S.photos[k].st) || 'none';
+const fotoFatta = k => ['ok', 'skip', 'attesa'].includes(ph(k));
 
 /* ---------- dati mancanti ---------- */
 function missingFor(sc, s = S) {
-  const m = []; const add = (k, l) => m.push({ k, l }); const ok = k => s.carta || ph(k) === 'ok' || ph(k) === 'skip';
+  const m = []; const add = (k, l) => m.push({ k, l }); const ok = k => s.carta || ph(k) === 'ok' || ph(k) === 'skip' || ph(k) === 'attesa';
   if (sc === 'cliente') {
     if (!s.cliente) add('locale', 'locale');
     if (!s.torref || (s.torref === 'Altre' && !s.torrNome)) add('torref', 'torrefazione');
@@ -748,7 +772,7 @@ function vistaApp() {
   const mm = missingFor(sc); const warn = !!S.warned[sc] && mm.length > 0;
   const bad = new Set(warn ? mm.map(x => x.k) : []);
   QS = { miss: new Set(mm.map(x => x.k)), first: mm.length ? mm[0].k : '' };
-  let h = '';
+  let h = senzaRete() ? `<div class="offline">Senza connessione: continua pure a compilare. Foto e invio partono quando torna la rete.</div>` : '';
   if (idx >= 0) {
     h += `<div class="hdr"><div class="hdr-row">
       <button class="ico-btn" data-a="indietro" aria-label="Indietro">${SVG.back}</button>
@@ -767,8 +791,26 @@ function vistaApp() {
   if (S.sheet) h += vSheet();
   if (UI.aiuto) h += vAiuto();
   if (UI.firma) h += vFirmaGrande();
+  if (UI.popup) h += vPopup();
   return h;
 }
+// Avvisi a tutto schermo: non si possono non vedere
+function vPopup() {
+  if (UI.popup === 'pezzi') return `<div class="pop-bg"><div class="pop" role="alertdialog" aria-modal="true">
+    <div class="pop-ico">!</div>
+    <div class="pop-t">Non hai inserito nessun pezzo di ricambio</div>
+    <div class="pop-b">Se hai cambiato qualcosa, anche solo una guarnizione, aggiungilo con <b>«Aggiungi pezzo»</b>.<br><br><b>Scriverlo nel lavoro svolto non basta: il pezzo non viene fatturato.</b></div>
+    <button class="big-btn rosso" data-a="pop-pezzo">${SVG.plus(26)} Aggiungi pezzo</button>
+    <button class="big-btn sec2" data-a="senza-pezzi">Non ho cambiato nessun pezzo</button></div></div>`;
+  if (UI.popup === 'ci') return `<div class="pop-bg"><div class="pop arancio" role="alertdialog" aria-modal="true">
+    <div class="pop-ico">?</div>
+    <div class="pop-t">Sicuro di non sapere il codice cliente Segafredo?</div>
+    <div class="pop-b">È «CI» seguito da 6 cifre. Se puoi chiedilo al locale: senza codice l'ufficio deve cercarlo a mano.</div>
+    <button class="big-btn" data-a="pop-ci-scrivo">Lo scrivo adesso</button>
+    <button class="big-btn sec2" data-a="pop-ci-nonso">Non lo so, vai avanti</button></div></div>`;
+  return '';
+}
+const ciValido = () => (S.cliente && !S.cliente.nuovo && !S.ciSblocca && /^CI\d{6}$/.test(S.cliente.ci || '')) || /^\d{6}$/.test(S.ci || '');
 
 /* ---------- Inizio ---------- */
 // Nei giorni di chiusura (Segafredo il 25, gli altri a fine mese) l'avviso compare solo a chi ha rapportini non inviati.
@@ -920,13 +962,14 @@ function vTorref(bad, kBad, t, nome, aT, aN, nota = '') {
 function vFoto(key, label, big) {
   const p = S.photos[key];
   const salta = /^(app|rit)_/.test(key);   // solo le targhette: il timbro ha già l'alternativa della firma
-  const altre = `<div class="foto-alt"><button class="link" data-a="foto-gal" data-v="${key}">Scegli dalla galleria</button>${salta ? `<button class="link" data-a="foto-salta" data-v="${key}">La foto non funziona</button>` : ''}</div>`;
+  const cam = camPossibile() ? `<button class="link" data-a="foto-cam" data-v="${key}">${camInterna() ? 'Usa la fotocamera del telefono' : 'Fotocamera dell\'app'}</button>` : '';
+  const altre = `<div class="foto-alt"><button class="link" data-a="foto-gal" data-v="${key}">Scegli dalla galleria</button>${cam}${salta ? `<button class="link" data-a="foto-salta" data-v="${key}">La foto non funziona</button>` : ''}</div>`;
   if (!p || p.st === 'none') return `<button class="foto-btn ${big ? 'big' : ''}" data-a="foto" data-v="${key}">${SVG.cam(big ? 40 : 24)}${esc(label)}</button>${altre}`;
   if (p.st === 'skip') return `<div class="foto-ok"><div class="ph"></div><div class="m err">Foto non fatta: segnalata all'ufficio</div>
     <button class="btn2" data-a="foto" data-v="${key}">Riprova</button></div>`;
   if (p.st === 'err') return `<div class="foto-ok">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="ph"></div>'}<div class="m err">Non caricata: tocca Rifai</div>
     <button class="btn2" data-a="foto" data-v="${key}">Rifai</button></div>${altre}`;
-  const msg = p.st === 'up' ? 'Caricamento…' : p.st === 'err' ? 'Non caricata: tocca Rifai' : 'Foto caricata';
+  const msg = p.st === 'up' ? 'Caricamento…' : p.st === 'attesa' ? 'Salvata sul telefono: si carica quando torna la connessione' : 'Foto caricata';
   return `<div class="foto-ok">${p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="ph"></div>'}<div class="m ${p.st === 'err' ? 'err' : ''}">${msg}</div>
     <button class="btn2" data-a="foto" data-v="${key}">Rifai</button></div>`;
 }
@@ -969,9 +1012,9 @@ function vCliente(bad) {
   if (S.torref === 'Segafredo') {
     const locked = c && !c.nuovo && !S.ciSblocca && /^CI\d{6}$/.test(c.ci || '');
     h += locked ? `<div><div class="lbl">Codice cliente Segafredo</div><div class="locked"><b>${esc(c.ci)}</b><span>${SVG.check(18)} Dall'elenco</span><button class="btn2" style="min-height:40px" data-a="ci-cambia">Cambia</button></div></div>`
-      : facolt('ci', 'Codice cliente Segafredo <b>(facoltativo)</b>' + (S.ci ? ': CI' + esc(S.ci) : ''),
-        `<div class="prefix"><span>CI</span><input class="inp" type="tel" inputmode="numeric" value="${esc(S.ci)}" data-b="ci" data-f="cifre" data-p="ciMsg"></div>
-        <div id="p-ciMsg">${pCiMsg()}</div>`, !!S.ci || S.ciSblocca);
+      : `<div id="q-ci"><div class="lbl">Codice cliente Segafredo</div>
+        <div class="prefix"><span>CI</span><input class="inp" id="in-ci" type="tel" inputmode="numeric" value="${esc(S.ci)}" data-b="ci" data-f="cifre" data-p="ciMsg"></div>
+        <div id="p-ciMsg">${pCiMsg()}</div></div>`;
     h += blk(bad, 'firmatario', `<div class="lbl">Nome di chi firma</div><input class="inp" value="${esc(S.firmatario)}" data-b="firmatario">`);
     h += blk(bad, 'intervento', `<div class="lbl">Tipo d'intervento</div><div class="grid2">${INTERVENTI.map(l => opt(S.intervento === l, 'intervento', l, l, 'tall')).join('')}</div>`);
   }
@@ -997,7 +1040,7 @@ function pSuggCli() {
 }
 function pCiMsg() {
   const ok = /^\d{6}$/.test(S.ci);
-  return `<div class="${ok ? 'msg-ok' : S.ci ? 'msg-err' : 'hint'}">${ok ? 'Codice completo' : S.ci ? `Servono 6 cifre (${S.ci.length}/6)` : 'Le 6 cifre dopo «CI». Se non lo sai lascia vuoto: lo completa l\'ufficio.'}</div>`;
+  return `<div class="${ok ? 'msg-ok' : S.ci ? 'msg-err' : 'hint'}">${ok ? 'Codice completo' : S.ci ? `Servono 6 cifre (${S.ci.length}/6)` : (S.ciNonSo ? 'Hai detto che non lo sai: lo cerca l\'ufficio.' : 'Le 6 cifre dopo «CI». Chiedilo al locale se non lo sai.')}</div>`;
 }
 function pSuggLoc() {
   if (!S.locaQ.trim()) return '';
@@ -1202,7 +1245,7 @@ function vVerifiche() {
 /* ---------- Riepilogo ---------- */
 function sezioni() {
   const R = (k, v, req = true) => ({ k, v: v || (req ? 'Da compilare' : '—'), cls: v ? '' : (req ? 'miss' : 'dim'), miss: req && !v });
-  const phs = k => ph(k) === 'ok' ? 'caricata' : ph(k) === 'up' ? 'in caricamento' : ph(k) === 'err' ? '' : '';
+  const phs = k => ph(k) === 'ok' ? 'caricata' : ph(k) === 'up' ? 'in caricamento' : ph(k) === 'attesa' ? 'salvata sul telefono (si carica quando prende)' : '';
   const dShort = S.data.split('-').reverse().join('/');
   const tot = (S.minutes || 0) + (S.prima || 0);
   const lav = [R('Tempo', tot ? fmt(tot) + (S.prima ? ` (oggi ${fmt(S.minutes || 0)} + prima ${fmt(S.prima)})` : '') : ''), R('Lavoro svolto', S.lavoro.trim()), R('Pezzi', S.pezzi.length ? S.pezzi.map(p => p.q + ' × ' + p.n).join('\n') : 'Nessuno')];
@@ -1238,12 +1281,12 @@ function sezioni() {
       if (x.on === null) return { k: a.n, v: 'Sì o no?', cls: 'miss', miss: true };
       if (!x.on) return { k: a.n, v: 'No', cls: 'dim', miss: false };
       if (S.intervento === RITIRO) {
-        const m = !x.rMatricola.trim() || (!S.carta && ph('rit_' + a.k) !== 'ok');
+        const m = !x.rMatricola.trim() || (!S.carta && !fotoFatta('rit_' + a.k));
         return { k: a.n, v: 'Ritirato: ' + (x.rModello || '—') + '\nmatr. ' + (x.rMatricola ? x.rMatricola.toUpperCase() : 'mancante') + (x.rData ? ' · ' + fmtMonth(x.rData) : '') + '\nfoto ' + (phs('rit_' + a.k) || 'mancante'), cls: m ? 'miss' : '', miss: m };
       }
-      let miss = !x.matricola.trim() || (inst && !S.carta && ph('app_' + a.k) !== 'ok');
+      let miss = !x.matricola.trim() || (inst && !S.carta && !fotoFatta('app_' + a.k));
       let v = (x.modello || '—') + '\nmatr. ' + (x.matricola ? x.matricola.toUpperCase() : 'mancante') + (x.data ? ' · ' + fmtMonth(x.data) : '') + '\nfoto ' + (phs('app_' + a.k) || (inst ? 'mancante' : 'non fatta (facoltativa)'));
-      if (inst && !x.rNone) { v += '\nRitirato: ' + (x.rModello || '—') + ' · matr. ' + (x.rMatricola ? x.rMatricola.toUpperCase() : 'mancante') + ' · foto ' + (phs('rit_' + a.k) || 'mancante'); if (!x.rMatricola.trim() || (!S.carta && ph('rit_' + a.k) !== 'ok')) miss = true; }
+      if (inst && !x.rNone) { v += '\nRitirato: ' + (x.rModello || '—') + ' · matr. ' + (x.rMatricola ? x.rMatricola.toUpperCase() : 'mancante') + ' · foto ' + (phs('rit_' + a.k) || 'mancante'); if (!x.rMatricola.trim() || (!S.carta && !fotoFatta('rit_' + a.k))) miss = true; }
       if (inst && x.rNone) v += '\nNessuno ritirato';
       return { k: a.n, v, cls: miss ? 'miss' : '', miss };
     }));
@@ -1407,8 +1450,12 @@ const A = {
     if (m.length && !forza) return A['vai-mancante']();
     // dal cliente senza pezzi: una volta chiedo se se li è dimenticati (capita di scriverli solo nella descrizione)
     if (S.screen === 'lavoro' && S.mode === 'cliente' && !S.pezzi.length && !S.senzaPezzi) {
-      S.warned.pezzi = true; render();
-      const el = document.getElementById('box-pezzi'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      S.warned.pezzi = true; UI.popup = 'pezzi'; UI.popForza = !!forza; render();
+      return;
+    }
+    // Segafredo senza codice cliente: chiedo se è sicuro di non saperlo (una volta per rapportino)
+    if (S.screen === 'cliente' && S.torref === 'Segafredo' && !ciValido() && !S.ciNonSo) {
+      UI.popup = 'ci'; UI.popForza = !!forza; render();
       return;
     }
     if (S.fromSummary) return set({ screen: 'riepilogo', fromSummary: false });
@@ -1485,7 +1532,14 @@ const A = {
   'chiudi-aiuto': () => { UI.aiuto = ''; render(); },
   ricarica: () => { document.body.style.opacity = '.5'; try { location.reload(); } catch (e) { location.href = location.href; } },
   'we2-apri': () => { UI.we2Aperti = true; const el = document.getElementById('p-listaPezzi'); if (el) el.innerHTML = pListaPezzi(); else render(); },
-  'senza-pezzi': () => { S.senzaPezzi = true; A.avanti(true); },
+  'senza-pezzi': () => { UI.popup = ''; S.senzaPezzi = true; A.avanti(true); },
+  'pop-pezzo': () => { UI.popup = ''; A['apri-pezzi'](); },
+  'pop-ci-scrivo': () => {
+    UI.popup = ''; S.ciSblocca = S.ciSblocca || !!(S.cliente && S.cliente.ci); render();
+    const el = document.getElementById('q-ci'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('q', 'flash'); }
+    setTimeout(() => { const i = document.getElementById('in-ci'); if (i) i.focus({ preventScroll: true }); }, 350);
+  },
+  'pop-ci-nonso': () => { UI.popup = ''; S.ciNonSo = true; A.avanti(UI.popForza); },
   'add-pezzo': v => { aggiungiPezzo(v, 1); set({ sheet: false, pezzoQ: '' }); },
   // chiusura
   'uguale-firma': () => set({ ricevuto: S.firmatario }),
@@ -1510,9 +1564,10 @@ const A = {
   otipo: v => set({ oTipo: v }),
   check: i => { const k = S.oTipo + '|' + i; S.checks[k] = !S.checks[k]; set({}); },
   // foto
-  foto: k => { fotoKey = k; salvaPrimaDellaFoto(k); const fi = document.getElementById('foto-in'); fi.value = ''; fi.click(); },
+  foto: k => { if (camInterna() && camPossibile()) return apriCamera(k); fotoKey = k; salvaPrimaDellaFoto(k); const fi = document.getElementById('foto-in'); fi.value = ''; fi.click(); },
   'foto-gal': k => { fotoKey = k; salvaPrimaDellaFoto(k); const fi = document.getElementById('foto-gal'); fi.value = ''; fi.click(); },
   'foto-salta': k => { S.photos[k] = { st: 'skip' }; set({}); },
+  'foto-cam': k => { const on = !camInterna(); store.set(K_CAM, on); if (on) apriCamera(k); else render(); },
   // invio
   invia: () => invia(),
   nuovo: () => { clearDraft(); S = Object.assign(initState(), { data: oggi() }); S.drafts = elencoBozze(); if (tornaAChi()) return; render(); },
@@ -1555,19 +1610,115 @@ document.addEventListener('keydown', e => {
 let fotoKey = null;
 async function fotoScelta(e) {
   const file = e.target.files && e.target.files[0]; const k = fotoKey; store.del(K_FOTO); if (!file || !k) return;
+  caricaFoto(k, file);
+}
+const nomeFoto = k => (S.mode === 'officina' ? (S.oMatricola || 'officina') : (S.cliente ? S.cliente.nome : 'cliente')) + ' ' + k;
+async function caricaFoto(k, file) {
   S.photos[k] = { st: 'up' }; render();
+  let thumb = '', full = '';
   try {
-    const { full, thumb } = await riduci(file);
+    ({ full, thumb } = await riduci(file));
     S.photos[k] = { st: 'up', thumb }; render();
-    const nome = (S.mode === 'officina' ? (S.oMatricola || 'officina') : (S.cliente ? S.cliente.nome : 'cliente')) + ' ' + k;
-    const r = await run('appCaricaFoto', AUTH.pin, full, nome);
+    const r = await run('appCaricaFoto', AUTH.pin, full, nomeFoto(k));
     S.photos[k] = { st: 'ok', thumb, url: r.url, id: r.id };
   } catch (err) {
-    S.photos[k] = Object.assign({}, S.photos[k], { st: 'err' });
-    alertBreve('Foto non caricata: ' + errMsg(err));
+    // senza connessione la foto resta sul telefono e si carica dopo (prima dell'invio o quando torna la rete)
+    if (full && errMsg(err) !== 'CODICE_ERRATO' && await IDB.set('foto|' + S.uid + '|' + k, full)) {
+      S.photos[k] = { st: 'attesa', thumb };
+      alertBreve('Senza connessione: foto salvata sul telefono, si carica quando prende.');
+    } else {
+      S.photos[k] = Object.assign({}, S.photos[k], { st: 'err' });
+      alertBreve('Foto non caricata: ' + errMsg(err));
+    }
   }
   set({});
 }
+// carica le foto rimaste sul telefono; ritorna quante non è riuscito a caricare
+let _caricoAttesa = null;
+function caricaFotoInAttesa() {
+  if (_caricoAttesa) return _caricoAttesa;
+  _caricoAttesa = (async () => {
+    const uidOra = S.uid; let rimaste = 0;
+    for (const k of Object.keys(S.photos || {})) {
+      const p = S.photos[k]; if (!p || p.st !== 'attesa') continue;
+      const full = await IDB.get('foto|' + uidOra + '|' + k);
+      if (!full) { S.photos[k] = { st: 'err', thumb: p.thumb }; rimaste++; continue; }
+      try {
+        const r = await run('appCaricaFoto', AUTH.pin, full, nomeFoto(k));
+        if (S.uid !== uidOra) break;
+        S.photos[k] = { st: 'ok', thumb: p.thumb, url: r.url, id: r.id };
+        IDB.del('foto|' + uidOra + '|' + k);
+        salvaBozza();
+      } catch (e) { rimaste++; }
+    }
+    return rimaste;
+  })().finally(() => { _caricoAttesa = null; });
+  return _caricoAttesa;
+}
+
+/* ---------- fotocamera dentro l'app (per i telefoni che chiudono la pagina quando si apre la fotocamera) ---------- */
+const K_CAM = 'rap_cam_interna';
+const camInterna = () => !!store.get(K_CAM);
+const camPossibile = () => !DENTRO_GOOGLE && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext !== false;
+let _cam = null;
+async function apriCamera(k) {
+  chiudiCamera();
+  const box = document.createElement('div'); box.className = 'cam-full';
+  box.innerHTML = `<video playsinline autoplay muted></video><div class="cam-msg">Apro la fotocamera…</div>
+    <div class="cam-b"><button class="big-btn sec2" data-cam="chiudi">Annulla</button><button class="cam-scatta" data-cam="scatta" aria-label="Scatta la foto"></button><span></span></div>`;
+  box.addEventListener('click', e => { const b = e.target.closest('[data-cam]'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (b.dataset.cam === 'scatta') scatta(); else chiudiCamera(); });
+  document.body.appendChild(box);
+  _cam = { box, k, stream: null };
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } } });
+    if (!_cam || _cam.box !== box) { stream.getTracks().forEach(t => t.stop()); return; }
+    _cam.stream = stream;
+    const v = box.querySelector('video'); v.srcObject = stream;
+    try { await v.play(); } catch (e) { }
+    box.querySelector('.cam-msg').textContent = '';
+  } catch (e) {
+    chiudiCamera();
+    alertBreve(e && e.name === 'NotAllowedError' ? 'Fotocamera non permessa: in Chrome tocca il lucchetto accanto all\'indirizzo → Autorizzazioni → Fotocamera → Consenti. Intanto usa «Scegli dalla galleria».'
+      : 'Fotocamera dell\'app non disponibile su questo telefono: usa «Scegli dalla galleria».');
+  }
+}
+function chiudiCamera() {
+  const c = _cam; _cam = null; if (!c) return;
+  if (c.stream) c.stream.getTracks().forEach(t => t.stop());
+  const v = c.box.querySelector('video'); if (v) v.srcObject = null;
+  c.box.remove();
+}
+function scatta() {
+  const c = _cam; if (!c || !c.stream) return;
+  const v = c.box.querySelector('video'); const w = v.videoWidth, h = v.videoHeight; if (!w || !h) return;
+  const r = Math.min(1, 1400 / Math.max(w, h));
+  const cv = document.createElement('canvas'); cv.width = Math.round(w * r); cv.height = Math.round(h * r);
+  cv.getContext('2d').drawImage(v, 0, 0, cv.width, cv.height);
+  const k = c.k; chiudiCamera();
+  cv.toBlob(b => { cv.width = cv.height = 0; if (b) caricaFoto(k, b); else alertBreve('Foto non riuscita: riprova.'); }, 'image/jpeg', 0.85);
+}
+
+/* ---------- senza connessione: dati salvati sul telefono (IndexedDB, più spazio della memoria normale) ---------- */
+const IDB = (() => {
+  let p = null;
+  const db = () => p || (p = new Promise((ok, ko) => { const r = indexedDB.open('rapportini', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); }));
+  const tx = (modo, f) => db().then(d => new Promise((ok, ko) => { const t = d.transaction('kv', modo); const q = f(t.objectStore('kv')); t.oncomplete = () => ok(q && q.result); t.onerror = () => ko(t.error); t.onabort = () => ko(t.error); }));
+  return {
+    get: k => tx('readonly', s => s.get(k)).catch(() => null),
+    set: (k, v) => tx('readwrite', s => s.put(v, k)).then(() => true).catch(() => false),
+    del: k => tx('readwrite', s => s.delete(k)).catch(() => { })
+  };
+})();
+const senzaRete = () => UI.offline || navigator.onLine === false;
+const oggiTelefono = () => { const t = new Date(); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); };
+const erroreRete = e => errMsg(e) !== 'CODICE_ERRATO';
+window.addEventListener('offline', () => { if (UI.phase === 'pronto' && !UI.firma && !_cam) render(); });
+window.addEventListener('online', () => {
+  if (!AUTH || !AUTH.pin || UI.phase !== 'pronto') return;
+  if (UI.offline) run('appDati', AUTH.pin).then(d => { D = d; UI.offline = false; IDB.set('dati', d); if (!UI.firma && !_cam) render(); }).catch(() => { });
+  if (S.mode) caricaFotoInAttesa().then(() => { if (!UI.firma && !_cam) render(); });
+  else if (!UI.firma && !_cam) render();
+});
 document.getElementById('foto-in').addEventListener('change', fotoScelta);
 document.getElementById('foto-gal').addEventListener('change', fotoScelta);
 // Android a volte chiude la pagina mentre è aperta la fotocamera (poca memoria): prima di aprirla salvo subito
@@ -1658,6 +1809,15 @@ function initFirma() {
 async function invia() {
   UI.sending = true; render();
   try {
+    if (Object.values(S.photos || {}).some(p => p && p.st === 'attesa')) {
+      const rimaste = await caricaFotoInAttesa();
+      if (rimaste) {
+        UI.sending = false; render();
+        const persa = Object.values(S.photos).some(p => p && p.st === 'err');
+        alertBreve(persa ? 'Una foto salvata sul telefono non si trova più: rifalla e poi invia.' : 'Ancora senza connessione: il rapportino è salvato sul telefono. Invialo quando prende.');
+        return;
+      }
+    }
     let fotoTimbro = '';
     if (S.mode === 'cliente') {
       if (S.timbro === 'foto') fotoTimbro = (S.photos.timbro && S.photos.timbro.url) || '';
@@ -1689,11 +1849,13 @@ async function invia() {
     UI.sending = false;
     S.esito = es; S.screen = 'conferma'; S.savedAt = '';
     render();
-    run('appDati', AUTH.pin).then(d => { D = d; }).catch(() => { });   // aggiorna clienti e pezzi in sottofondo
+    run('appDati', AUTH.pin).then(d => { D = d; UI.offline = false; IDB.set('dati', d); }).catch(() => { });   // aggiorna clienti e pezzi in sottofondo
   } catch (e) {
     UI.sending = false; render();
     if (errMsg(e) === 'CODICE_ERRATO') { store.del(K_AUTH); AUTH = null; UI.phase = 'pin'; UI.err = 'Il codice d\'accesso è cambiato: inseriscilo di nuovo. Il rapportino resta salvato.'; render(); return; }
-    alertBreve('Invio non riuscito: ' + errMsg(e) + '. Il rapportino è salvato, riprova.');
+    alertBreve(navigator.onLine === false || /connessione|non risponde/i.test(errMsg(e))
+      ? 'Senza connessione: il rapportino è salvato sul telefono (lo trovi in «Rapportini non inviati»). Invialo quando prende.'
+      : 'Invio non riuscito: ' + errMsg(e) + '. Il rapportino è salvato, riprova.');
   }
 }
 
@@ -1709,14 +1871,32 @@ function avvia() {
     }).catch(e => falli(e));
   }
   UI.phase = 'avvio'; render();
-  run('appDati', AUTH.pin).then(d => {
-    D = d; UI.phase = 'pronto';
+  const pronto = (d, offline) => {
+    D = d; UI.offline = !!offline; UI.phase = 'pronto';
     if (!S.mode) { S.data = D.oggi; S.drafts = elencoBozze(); }
     render();
     const ripresa = riprendiDopoFoto();
+    if (offline) return;
     run('appLeggiBozze2', AUTH.pin, AUTH.tecnico)
       .then(l => { const n = unisciBozzeServer(l); if (!ripresa && riprendiDopoFoto()) return; if (n && !S.mode) { S.drafts = elencoBozze(); render(); } }).catch(() => { });
-  }).catch(e => falli(e));
+  };
+  IDB.get('dati').then(cache => {
+    let fatto = false;
+    // dati dell'ultima volta (senza connessione): la data è quella del telefono
+    const usaCache = () => { if (fatto) return; fatto = true; pronto(Object.assign({}, cache, { oggi: oggiTelefono() }), true); };
+    const rete = run('appDati', AUTH.pin);
+    // con poco segnale non aspetto 90 secondi: dopo 12 secondi apro con i dati salvati
+    const tmo = cache ? setTimeout(usaCache, 12000) : null;
+    rete.then(d => {
+      clearTimeout(tmo); IDB.set('dati', d);
+      if (!fatto) { fatto = true; pronto(d, false); }
+      else { D = d; UI.offline = false; if (!UI.firma && !_cam) render(); }   // arrivati dopo: aggiorno in silenzio
+    }).catch(e => {
+      clearTimeout(tmo);
+      if (fatto) return;
+      if (cache && erroreRete(e)) usaCache(); else falli(e);
+    });
+  });
 }
 // Tablet di officina: torna alla scelta del nome (dopo un invio, un "Interrompi e salva", o quando si riaccende lo schermo)
 function tornaAChi(sempre) {
@@ -1751,6 +1931,10 @@ function entraConChiave(t) {
   }
 }
 partenza();
+// Pagina su GitHub: salvata nel telefono (sw.js) così si apre anche senza connessione
+if (!DENTRO_GOOGLE && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+}
 </script>
 </body>
 </html>
