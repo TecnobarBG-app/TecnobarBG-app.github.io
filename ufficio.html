@@ -739,6 +739,10 @@ function vistaRap() {
       ${c.note ? `<p><b>Note</b></p><div class="campo-v">${esc(c.note)}</div>` : ''}
       ${r.foto.length ? `<p><b>Foto</b></p><div class="azioni">${r.foto.map(f => `<a class="btn sec piccolo" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.t.replace(/^Foto\s*/i, '') || 'foto')}</a>`).join('')}</div>` : ''}
       <div class="azioni" style="margin-top:14px">
+        <button class="btn sec" data-a="pdfRap" data-v="0">PDF</button><button class="btn sec" data-a="pdfRap" data-v="1">PDF senza prezzi</button>
+        ${C.pdf && C.pdf.n === r.n ? `<a class="btn ok piccolo" href="${C.pdf.href}" download="${esc(C.pdf.nome)}">Scarica di nuovo: ${esc(C.pdf.nome)}</a>` : ''}
+      </div>
+      <div class="azioni" style="margin-top:6px">
         ${!r.bloccato && !r.annullato && r.permessi !== 'fatture' ? '<button class="btn" data-a="modifica">Correggi</button>' : ''}
         ${!r.bloccato && r.puoAnnullare && r.permessi !== 'fatture' ? (r.annullato ? '<button class="btn sec" data-a="riattiva">Riattiva il rapportino</button>' : '<button class="btn sec" data-a="chiediAnnulla" style="color:var(--rosso);border-color:var(--rosso)">Annulla il rapportino</button>') : ''}
       </div>
@@ -803,6 +807,20 @@ document.addEventListener('click', async ev => {
     const campi = { lavoro: $('mLavoro').value, tempo: $('mTempo').value, pezzi: $('mPezzi').value, note: $('mNote').value, ditta: $('mDitta').value };
     if ($('mLoc')) campi.loc = $('mLoc').value;
     return salvaRap('uffModifica', [campi], 'Correzioni salvate');
+  }
+  if (a === 'pdfRap') {
+    if (V.busy) return;
+    V.busy = true; $('busy').textContent = 'Preparo il PDF… (qualche secondo)'; $('busy').classList.add('on');
+    try {
+      const r = await run('uffPdfRapportino', K, C.rap.n, b.dataset.v === '1');
+      if (C.pdf) URL.revokeObjectURL(C.pdf.href);
+      const bytes = Uint8Array.from(atob(r.b64), ch => ch.charCodeAt(0));
+      C.pdf = { nome: r.nome, href: URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })), n: C.rap.n };
+      const l = document.createElement('a'); l.href = C.pdf.href; l.download = r.nome; document.body.appendChild(l); l.click(); l.remove();
+      toast('PDF pronto: ' + r.nome, 'ok');
+    } catch (e) { toast(errMsg(e), 'err'); }
+    finally { V.busy = false; $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; render(); }
+    return;
   }
   if (a === 'salvaPrezziRap') {
     if ($('mPezzi') && $('mPezzi').value.trim() !== String(C.rap.campi.pezzi || '').trim())
