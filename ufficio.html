@@ -706,6 +706,9 @@ function vistaRap() {
       <label class="lbl" for="mTempo"><b>${r.officina ? 'Ore di lavoro' : 'Tempo di lavoro'}</b></label>
       <select class="campo" id="mTempo">${(r.tempi.indexOf(c.tempo) < 0 && c.tempo ? [c.tempo] : []).concat(r.tempi).map(t => `<option ${t === c.tempo ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
       <label class="lbl" for="mPezzi"><b>Pezzi sostituiti</b> <span class="sub">(uno per riga; i prezzi già scritti restano ai pezzi che non cambi)</span></label><textarea id="mPezzi">${esc(c.pezzi)}</textarea>
+      ${(r.prezzi || []).length && r.idPrezzi ? `<label class="lbl"><b>Prezzi dei pezzi</b> <span class="sub">(€ per la quantità scritta; vuoto = ancora da prezzare)</span></label>
+      <table class="tab-prezzi">${r.prezzi.map((x, i) => `<tr><td>${esc(x.pezzo)}</td><td class="e"><input type="text" inputmode="decimal" class="mPrezzo" data-pos="${x.pos}" data-prima="${x.prezzo === null ? '' : x.prezzo}" value="${x.prezzo === null ? '' : String(x.prezzo).replace('.', ',')}" style="width:120px;min-width:120px;text-align:right;font-size:17px;padding:8px 10px" placeholder="da prezzare"> €</td></tr>`).join('')}</table>
+      <div class="azioni" style="margin:-4px 0 14px"><button class="btn ok piccolo" data-a="salvaPrezziRap">Salva i prezzi</button></div>` : ''}
       ${r.officina ? '' : `<label class="lbl" for="mLoc"><b>Località</b></label><input type="text" id="mLoc" list="dlLocM" value="${esc(c.loc)}" autocomplete="off">
         <datalist id="dlLocM">${(D.localita || []).filter(l => l.t != null).map(l => `<option value="${esc(l.n)}">`).join('')}</datalist>`}
       <label class="lbl" for="mDitta"><b>Ditta</b></label><select class="campo" id="mDitta"><option value="">${r.torr === D.segafredo ? '(automatica: ' + esc(r.ditta) + ')' : '— da assegnare —'}</option>${r.ditte.map(d => `<option ${d === c.ditta ? 'selected' : ''}>${esc(d)}</option>`).join('')}</select>
@@ -785,6 +788,29 @@ document.addEventListener('click', async ev => {
     const campi = { lavoro: $('mLavoro').value, tempo: $('mTempo').value, pezzi: $('mPezzi').value, note: $('mNote').value, ditta: $('mDitta').value };
     if ($('mLoc')) campi.loc = $('mLoc').value;
     return salvaRap('uffModifica', [campi], 'Correzioni salvate');
+  }
+  if (a === 'salvaPrezziRap') {
+    if ($('mPezzi') && $('mPezzi').value.trim() !== String(C.rap.campi.pezzi || '').trim())
+      return toast('Hai cambiato l\'elenco dei pezzi: prima «Salva le correzioni», poi riapri Correggi per i prezzi', 'err');
+    const righe = [];
+    for (const el of document.querySelectorAll('.mPrezzo')) {
+      const t = el.value.trim(); if (t === '') continue;
+      const v = leggiEuro(t);
+      if (isNaN(v) || v < 0 || v >= 10000) { el.focus(); return toast('Prezzo non valido: ' + t, 'err'); }
+      if (el.dataset.prima !== '' && Math.abs(Number(el.dataset.prima) - v) < 0.005) continue;   // non cambiato
+      righe.push({ id: C.rap.idPrezzi, pos: Number(el.dataset.pos), prezzo: Math.round(v * 100) / 100 });
+    }
+    if (!righe.length) return toast('Nessun prezzo cambiato', 'err');
+    if ((C.rap.stato === 'Inviata' || C.rap.stato === 'Da correggere') && !confirm('La proforma è già stata inviata: dopo la correzione andrà rimandata. Salvo?')) return;
+    if (V.busy) return;
+    V.busy = true; $('busy').classList.add('on');
+    try {
+      await run('uffSalvaPrezzi', K, D.mese, righe, 'corretto da Cerca rapportino');
+      C.rap = await run('uffRapportino', K, C.rap.n); C.sporco = true;
+      toast(righe.length === 1 ? 'Prezzo salvato' : righe.length + ' prezzi salvati', 'ok');
+    } catch (e) { toast(errMsg(e), 'err'); }
+    finally { V.busy = false; $('busy').classList.remove('on'); render(); }
+    return;
   }
   if (a === 'confAnnulla') { const m = $('mMotivo').value.trim(); if (!m) return toast('Scrivi perché lo annulli', 'err'); return salvaRap('uffAnnulla', [m, false], 'Rapportino annullato'); }
   if (a === 'riattiva') return salvaRap('uffAnnulla', ['', true], 'Rapportino riattivato');

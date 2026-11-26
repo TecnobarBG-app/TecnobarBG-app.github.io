@@ -1759,7 +1759,9 @@ function caricaFotoInAttesa() {
 
 /* ---------- fotocamera dentro l'app (per i telefoni che chiudono la pagina quando si apre la fotocamera) ---------- */
 const K_CAM = 'rap_cam_interna';
-const camInterna = () => !!store.get(K_CAM);
+// 26/11: la fotocamera dell'app è quella normale per tutti (con l'app Fotocamera di Android alcuni telefoni danno
+// "memoria insufficiente"). Chi vuole la fotocamera del telefono la sceglie col link sotto il pulsante (resta ricordato).
+const camInterna = () => { const v = store.get(K_CAM); return v === null ? true : !!v; };
 const camPossibile = () => !DENTRO_GOOGLE && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext !== false;
 let _cam = null;
 async function apriCamera(k) {
@@ -1780,7 +1782,8 @@ async function apriCamera(k) {
   } catch (e) {
     chiudiCamera();
     alertBreve(e && e.name === 'NotAllowedError' ? 'Fotocamera non permessa: in Chrome tocca il lucchetto accanto all\'indirizzo → Autorizzazioni → Fotocamera → Consenti. Intanto usa «Scegli dalla galleria».'
-      : 'Fotocamera dell\'app non disponibile su questo telefono: usa «Scegli dalla galleria».');
+      : 'Fotocamera dell\'app non disponibile su questo telefono: d\'ora in poi si apre quella del telefono. Puoi anche usare «Scegli dalla galleria».');
+    if (!(e && e.name === 'NotAllowedError')) { store.set(K_CAM, false); render(); }
   }
 }
 function chiudiCamera() {
