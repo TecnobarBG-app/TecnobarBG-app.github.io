@@ -165,6 +165,7 @@ const chiaveCod = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const nomeMese = ym => { if (!ym) return ''; const [a, m] = ym.split('-').map(Number); return new Date(a, m - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }); };
 const spostaMese = (ym, d) => { const [a, m] = ym.split('-').map(Number); const x = new Date(a, m - 1 + d, 1); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); };
 // quantità scritta all'inizio della riga del pezzo ("2 x guarnizione" → 2), come fa il registro
+const senzaQta = t => String(t || '').replace(/^\s*\d+\s*(x|pz\.?|pezzi|n\.)?\s*/i, '').trim();
 const qtaPezzo = t => { const m = String(t || '').match(/^\s*(\d+)/); return m ? Math.max(1, Number(m[1])) : 1; };
 const leggiEuro = s => { s = String(s || '').replace(/[€\s]/g, ''); if (s === '') return NaN; if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); return Number(s); };
 const errMsg = e => String((e && e.message) || e || 'Errore').replace(/^Exception:\s*/, '');
@@ -519,7 +520,11 @@ function domanda(g) {
       <div class="euro"><input type="text" inputmode="decimal" id="inPrezzo" placeholder="0,00" autocomplete="off"><span>€</span>
       <button class="btn" data-a="prezzoScritto" data-k="${k}">Salva</button></div></div>
       <div class="azioni"><button class="btn sec piccolo" data-a="garanzia" data-k="${k}">In garanzia / non si paga (0 €)</button>
-      ${g.occ.length > 1 ? `<button class="link" data-a="dividi" data-k="${k}">Prezzi diversi? Uno alla volta</button>` : ''}</div>`;
+      ${g.occ.length > 1 ? `<button class="link" data-a="dividi" data-k="${k}">Prezzi diversi? Uno alla volta</button>` : ''}
+      <button class="link" data-a="rinomina" data-k="${k}">Cambia il nome del pezzo</button></div>`;
+    if (V.rinomina === g.key) h += `<div class="form"><label for="inNome"><b>Nome giusto del pezzo</b> <span class="sub">(senza quantità: ${g.occ.some(o => o.q > 1) ? 'la quantità resta quella scritta dal tecnico' : 'resta 1'}${g.occ.length > 1 ? `; cambia in tutti i ${g.occ.length} rapportini` : ''})</span></label>
+      <input type="text" id="inNome" value="${esc(senzaQta(g.occ.length === 1 ? g.occ[0].pezzo : g.nome))}" autocomplete="off">
+      <div class="azioni"><button class="btn ok" data-a="rinominaSalva" data-k="${k}">Salva il nome</button><button class="link" data-a="rinomina" data-k="">Lascia stare</button></div></div>`;
     return h;
   }
   if (g.t === 'codice') {
@@ -903,7 +908,30 @@ document.addEventListener('click', async ev => {
     const ok = await salva('uffStato', [gp.torr, gp.ditta, b.dataset.az, data, ($('fNota') ? $('fNota').value : '').trim()], 'Salvato');
     if (ok) V.form = null; return render();
   }
+  if (a === 'rinomina') { V.rinomina = b.dataset.k || null; render(); const f = $('inNome'); if (f) { f.focus(); f.select(); } return; }
   if (!g) return;
+  if (a === 'rinominaSalva') {
+    // rinomina il pezzo nel rapportino (riga «Pezzi sostituiti»), tenendo la quantità scritta dal tecnico
+    const nuovo = senzaQta($('inNome').value);
+    if (!nuovo) return toast('Scrivi il nome del pezzo', 'err');
+    if (V.busy) return;
+    V.busy = true; $('busy').classList.add('on');
+    let fatti = 0;
+    try {
+      for (const o of g.occ) {
+        const x = intervento(o.id); if (!x.n) continue;
+        const righe = String(x.pezzi || '').split(/\r?\n/).map(t => t.trim()).filter(Boolean);
+        const i = o.pos - 1; if (!righe[i]) continue;
+        const pre = (righe[i].match(/^\s*\d+\s*(x|pz\.?|pezzi|n\.)?\s*/i) || [''])[0];
+        righe[i] = (pre ? pre.trim() + ' ' : '') + nuovo;
+        await run('uffModifica', K, x.n, { pezzi: righe.join('\n') });
+        fatti++;
+      }
+      toast(fatti === 1 ? 'Nome del pezzo cambiato' : `Nome cambiato in ${fatti} rapportini`, 'ok');
+    } catch (e) { toast(errMsg(e), 'err'); }
+    finally { V.busy = false; $('busy').classList.remove('on'); V.rinomina = null; }
+    return caricaMese(D.mese);
+  }
   if (a === 'prezzo' || a === 'prezzoScritto' || a === 'garanzia') {
     const u = a === 'garanzia' ? 0 : a === 'prezzo' ? Number(b.dataset.v) : leggiEuro($('inPrezzo').value);
     if (!(u >= 0) || isNaN(u)) return toast('Scrivi un prezzo (es. 12,50)', 'err');
