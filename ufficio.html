@@ -263,7 +263,7 @@ function gruppi(pf) {
     else if (p.t === 'incasso') metti('i|' + p.id, { t: 'incasso', scritto: p.scritto }, p);
     else if (p.t === 'prezzo') {
       const k = 'p|' + (p.k || p.pezzo);
-      if (V.dividi[k]) metti('p1|' + p.id + '|' + p.pos, { t: 'prezzo', nome: p.nome, gruppo: k }, p);
+      if (V.dividi[k] || p.variabile) metti('p1|' + p.id + '|' + p.pos, { t: 'prezzo', nome: p.nome, gruppo: k, variabile: !!p.variabile }, p);
       else metti(k, { t: 'prezzo', nome: p.nome }, p);
     }
   });
@@ -508,6 +508,7 @@ function domanda(g) {
     const qTot = g.occ.reduce((a, o) => a + o.q, 0);
     const diversi = g.occ.some(o => o.q !== 1);
     let h = `<div class="tipo">Prezzo del pezzo</div><h2>Quanto facciamo pagare?</h2><div class="cosa">${esc(g.occ.length === 1 ? g.occ[0].pezzo : g.nome)}</div>`;
+    if (g.variabile) h += `<div class="avviso">Prezzo che cambia ogni volta: scrivi quello di <b>questo</b> rapportino (non viene proposto quello della volta prima).</div>`;
     if (g.occ.length > 1) h += `<p><b>Compare in ${g.occ.length} rapportini</b> (${qTot} pezzi in tutto): il prezzo vale per tutti.</p>`;
     h += contesto(g.occ, 3);
     if (g.su != null) {
