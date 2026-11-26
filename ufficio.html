@@ -164,6 +164,8 @@ const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 const chiaveCod = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const nomeMese = ym => { if (!ym) return ''; const [a, m] = ym.split('-').map(Number); return new Date(a, m - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }); };
 const spostaMese = (ym, d) => { const [a, m] = ym.split('-').map(Number); const x = new Date(a, m - 1 + d, 1); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); };
+// quantità scritta all'inizio della riga del pezzo ("2 x guarnizione" → 2), come fa il registro
+const qtaPezzo = t => { const m = String(t || '').match(/^\s*(\d+)/); return m ? Math.max(1, Number(m[1])) : 1; };
 const leggiEuro = s => { s = String(s || '').replace(/[€\s]/g, ''); if (s === '') return NaN; if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); return Number(s); };
 const errMsg = e => String((e && e.message) || e || 'Errore').replace(/^Exception:\s*/, '');
 const $ = id => document.getElementById(id);
@@ -712,8 +714,9 @@ function vistaRap() {
       <label class="lbl" for="mTempo"><b>${r.officina ? 'Ore di lavoro' : 'Tempo di lavoro'}</b></label>
       <select class="campo" id="mTempo">${(r.tempi.indexOf(c.tempo) < 0 && c.tempo ? [c.tempo] : []).concat(r.tempi).map(t => `<option ${t === c.tempo ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
       <label class="lbl" for="mPezzi"><b>Pezzi sostituiti</b> <span class="sub">(uno per riga; i prezzi già scritti restano ai pezzi che non cambi)</span></label><textarea id="mPezzi">${esc(c.pezzi)}</textarea>
-      ${(r.prezzi || []).length && r.idPrezzi ? `<label class="lbl"><b>Prezzi dei pezzi</b> <span class="sub">(€ per la quantità scritta; vuoto = ancora da prezzare)</span></label>
-      <table class="tab-prezzi">${r.prezzi.map((x, i) => `<tr><td>${esc(x.pezzo)}</td><td class="e"><input type="text" inputmode="decimal" class="mPrezzo" data-pos="${x.pos}" data-prima="${x.prezzo === null ? '' : x.prezzo}" value="${x.prezzo === null ? '' : String(x.prezzo).replace('.', ',')}" style="width:120px;min-width:120px;text-align:right;font-size:17px;padding:8px 10px" placeholder="da prezzare"> €</td></tr>`).join('')}</table>
+      ${(r.prezzi || []).length && r.idPrezzi ? `<label class="lbl"><b>Prezzi dei pezzi</b> <span class="sub">(prezzo di <b>1 pezzo</b>, come in «Sistema»: il totale per la quantità lo calcola il registro; vuoto = da prezzare)</span></label>
+      <table class="tab-prezzi">${r.prezzi.map(x => { const q = qtaPezzo(x.pezzo); const u = x.prezzo === null ? '' : String(Math.round(x.prezzo / q * 100) / 100).replace('.', ',');
+        return `<tr><td>${esc(x.pezzo)}${q > 1 ? `<div class="sub">${x.prezzo === null ? '' : 'totale ' + euro(x.prezzo) + ' per ' + q}</div>` : ''}</td><td class="e">${q > 1 ? '<span class="sub">cad. </span>' : ''}<input type="text" inputmode="decimal" class="mPrezzo" data-pos="${x.pos}" data-q="${q}" data-prima="${x.prezzo === null ? '' : x.prezzo}" value="${u}" style="width:120px;min-width:120px;text-align:right;font-size:17px;padding:8px 10px" placeholder="da prezzare"> €</td></tr>`; }).join('')}</table>
       <div class="azioni" style="margin:-4px 0 14px"><button class="btn ok piccolo" data-a="salvaPrezziRap">Salva i prezzi</button></div>` : ''}
       ${r.officina ? '' : `<label class="lbl" for="mLoc"><b>Località</b></label><input type="text" id="mLoc" list="dlLocM" value="${esc(c.loc)}" autocomplete="off">
         <datalist id="dlLocM">${(D.localita || []).filter(l => l.t != null).map(l => `<option value="${esc(l.n)}">`).join('')}</datalist>`}
@@ -803,8 +806,9 @@ document.addEventListener('click', async ev => {
       const t = el.value.trim(); if (t === '') continue;
       const v = leggiEuro(t);
       if (isNaN(v) || v < 0 || v >= 10000) { el.focus(); return toast('Prezzo non valido: ' + t, 'err'); }
-      if (el.dataset.prima !== '' && Math.abs(Number(el.dataset.prima) - v) < 0.005) continue;   // non cambiato
-      righe.push({ id: C.rap.idPrezzi, pos: Number(el.dataset.pos), prezzo: Math.round(v * 100) / 100 });
+      const tot = Math.round(v * (Number(el.dataset.q) || 1) * 100) / 100;   // prezzo di 1 pezzo × quantità, come in «Sistema»
+      if (el.dataset.prima !== '' && Math.abs(Number(el.dataset.prima) - tot) < 0.005) continue;   // non cambiato
+      righe.push({ id: C.rap.idPrezzi, pos: Number(el.dataset.pos), prezzo: tot });
     }
     if (!righe.length) return toast('Nessun prezzo cambiato', 'err');
     if ((C.rap.stato === 'Inviata' || C.rap.stato === 'Da correggere') && !confirm('La proforma è già stata inviata: dopo la correzione andrà rimandata. Salvo?')) return;
