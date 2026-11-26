@@ -96,6 +96,8 @@ tr.prob td { background: var(--rosso-soft); }
 .ris { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
 .ris:hover { border-color: var(--accent); }
 .ris.ann { opacity: .55; text-decoration: line-through; }
+.tendina { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.tendina .freccia-t { font-size: 22px; color: var(--accent); flex: none; }
 .tab-prezzi { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
 .tab-prezzi td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .tab-prezzi td.e { text-align: right; white-space: nowrap; width: 1%; }
@@ -372,9 +374,13 @@ function cardFtPrivati() {
   const da = (D.privatiFt || []).filter(x => !x.ft);
   if (!da.length) return '';
   const altri = da.filter(x => !x.delMese).length;
-  return `<div class="card arancio" id="ftPriv"><h2>Clienti privati da fatturare (${da.length})</h2>
-    <p class="sub">Hanno chiesto la fattura nel rapportino. Restano qui finché non scrivi i dati della fattura${altri ? ` · <b>${altri} ${altri === 1 ? 'è' : 'sono'} di mesi passati</b>` : ''}.</p>
-    ${da.map(rigaFtPriv).join('')}</div>`;
+  // chiuso a tendina (26/11): aperto solo se lo apri tu o se stai compilando una fattura
+  const aperto = V.privAperto || !!V.ftPriv;
+  const pronti = da.filter(x => !x.prob && !x.datiKo).length, daSist = da.length - pronti;
+  return `<div class="card arancio" id="ftPriv"><button class="tendina" data-a="privTendina" aria-expanded="${aperto}">
+      <span><b style="font-size:22px">Clienti privati da fatturare (${da.length})</b><br><span class="sub">${pronti} ${pronti === 1 ? 'pronto' : 'pronti'} da fatturare${daSist ? ` · ${daSist} da sistemare` : ''}${altri ? ` · <b>${altri} di mesi passati</b>` : ''}</span></span>
+      <span class="freccia-t">${aperto ? '▲' : '▼'}</span></button>
+    ${aperto ? `<p class="sub" style="margin-top:8px">Hanno chiesto la fattura nel rapportino. Restano qui finché non scrivi i dati della fattura.</p>${da.map(rigaFtPriv).join('')}` : ''}</div>`;
 }
 function rigaFtPriv(x) {
   const aperto = V.ftPriv === x.id;
@@ -823,6 +829,7 @@ document.addEventListener('click', async ev => {
   if (a === 'form') { V.form = { pf: b.dataset.pf, az: b.dataset.az }; render(); const f = $('fNota'); if (f && b.dataset.az === 'correggere') f.focus(); return; }
   if (a === 'chiudiForm') { V.form = null; V.ftPriv = null; return render(); }
   if (a === 'vaiMeseDi') return caricaMese(b.dataset.m);
+  if (a === 'privTendina') { V.privAperto = !(V.privAperto || !!V.ftPriv); if (!V.privAperto) V.ftPriv = null; return render(); }
   if (a === 'ftPriv') { V.ftPriv = b.dataset.id; render(); const f = $('fpNum') || $('fpDati'); if (f) f.focus(); return; }
   if (a === 'salvaDatiFt') {
     const t = $('fpDati').value.trim();
