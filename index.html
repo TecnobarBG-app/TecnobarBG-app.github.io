@@ -735,7 +735,13 @@ function missingFor(sc, s = S) {
    RENDER
    ============================================================ */
 const $app = document.getElementById('app');
+// 27/11: niente più «Contanti» per i privati, anche nelle bozze iniziate prima
+function fixPag_() {
+  if (S.torref === 'Privato' && S.pag !== 'Vuole fattura') S.pag = 'Vuole fattura';
+  if (S.oTorref === 'Privato' && S.oPag !== 'Vuole fattura') S.oPag = 'Vuole fattura';
+}
 function render() {
+  try { fixPag_(); } catch (e) { }
   const main = document.querySelector('.main');
   const keepScroll = main && main.dataset.screen === S.screen ? main.scrollTop : 0;
   let html;
@@ -1123,8 +1129,9 @@ const msgFattura = t => { const ko = fatturaKo(t); return !String(t || '').trim(
   ? `<div class="hint" style="color:#b45309;font-weight:700">${ko}: chiedilo al cliente. Se non ce l'ha, scrivi il suo numero di telefono: l'ufficio lo richiamerà.</div>`
   : '<div class="msg-ok">Dati per la fattura completi</div>'; };
 function vPagamento(bad, pre, pag, importo, fattura) {
-  return `${blk(bad, pre ? 'oPag' : 'pag', `<div class="lbl">Pagamento</div><div class="grid2">${['Contanti', 'Vuole fattura'].map(l => opt(pag === l, pre ? 'opag' : 'pag', l, l)).join('')}</div>`)}
-    ${blk(bad, 'importo', `<div class="lbl">Importo incassato ${pag === 'Vuole fattura' ? '<span>(se ha pagato)</span>' : ''}</div><div class="prefix eur"><span>€</span>
+  // 27/11: ai privati si fa sempre fattura, la scelta «Contanti» non c'è più (fixPag_ mette «Vuole fattura»)
+  return `${blk(bad, pre ? 'oPag' : 'pag', `<div class="lbl">Pagamento</div>${opt(true, pre ? 'opag' : 'pag', 'Vuole fattura', 'Vuole fattura')}`)}
+    ${blk(bad, 'importo', `<div class="lbl">Importo incassato <span>(se ha pagato)</span></div><div class="prefix eur"><span>€</span>
       <input class="inp" type="text" inputmode="decimal" value="${esc(importo)}" data-b="${pre ? 'oImporto' : 'importo'}" data-f="importo"></div>`)}
     ${pag === 'Vuole fattura' ? blk(bad, pre ? 'oFattura' : 'fattura', vDatiFattura(pre ? 'oft' : 'ft', fattura)) : ''}`;
 }
