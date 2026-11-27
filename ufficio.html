@@ -402,6 +402,7 @@ function rigaFtPriv(x) {
   let h = `<div class="contesto" style="margin-top:8px"><div class="riga">
       <div><b>N. ${esc(x.num)}</b> · ${esc(x.data)}${x.delMese ? '' : ` · <b style="color:var(--rosso)">${esc(nomeMese(x.mese))}</b>`} · <b>${esc(x.cliente)}</b>
         <div class="sub">Dati per la fattura: ${x.dati ? esc(x.dati) : '<i>vuoto</i>'}</div>
+        ${x.prec ? `<div class="avviso" style="margin-top:4px"><b>Dati già in ufficio</b> – ultimi usati per questo cliente (N. ${esc(x.prec.num)}):<br>${esc(x.prec.testo).replace(/\n/g, '<br>')}</div>` : ''}
         ${x.datiKo ? `<div class="avviso" style="background:var(--rosso-soft);margin-top:4px"><b>Dati per la fattura da completare:</b> ${esc(x.datiKo)}. Chiamate il cliente e scriveteli qui prima di fatturare.</div>` : ''}
         <div class="sub">Dal registro: ${euro(x.tot)} + IVA (${euro(x.tot * 1.22)})${x.imp !== '' ? ` · incassati ${esc(x.imp)} €` : ''}</div>
         ${x.prob ? `<div class="sub" style="color:var(--rosso)"><b>${x.prob} ${x.prob === 1 ? 'cosa' : 'cose'} da sistemare</b> (es. prezzi dei pezzi): prima sistema, poi fattura.</div>` : ''}

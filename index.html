@@ -560,7 +560,7 @@ let AUTH = store.get(K_AUTH); // { pin, tecnico }
 let S = initState();
 let UI = { phase: 'avvio', err: '', tecnici: [], pinTmp: '', sending: false, geo: '', dupOk: {}, confAnnulla: false, ric: null, confScarta: '' };
 
-function ftVuoto() { return { nome: '', id: '', ind: '', sdi: '', tel: '', uff: false }; }
+function ftVuoto() { return { nome: '', id: '', ind: '', sdi: '', tel: '', uff: false, gia: false }; }
 function blankApp() { return { on: null, modello: '', matricola: '', data: '', rNone: false, rModello: '', rMatricola: '', rData: '', prefilled: false }; }
 function oggi() { return D ? D.oggi : new Date().toISOString().slice(0, 10); }
 function initState() {
@@ -816,6 +816,12 @@ function vPopup() {
     <div class="pop-b">È «CI» seguito da 6 cifre. Se puoi chiedilo al locale: senza codice l'ufficio deve cercarlo a mano.</div>
     <button class="big-btn" data-a="pop-ci-scrivo">Lo scrivo adesso</button>
     <button class="big-btn sec2" data-a="pop-ci-nonso">Non lo so, vai avanti</button></div></div>`;
+  if (UI.popup === 'gia') return `<div class="pop-bg"><div class="pop arancio" role="alertdialog" aria-modal="true">
+    <div class="pop-ico">?</div>
+    <div class="pop-t">Sei sicuro che abbiamo già i suoi dati?</div>
+    <div class="pop-b">Usalo <b>solo se questo cliente ha già ricevuto una fattura da noi</b> e i dati non sono cambiati.<br><br>Se è un cliente nuovo, se non sei sicuro o se ha cambiato P.IVA o intestazione, <b>scrivi i dati</b>: altrimenti la fattura esce sbagliata.</div>
+    <button class="big-btn" data-a="pop-gia-no">No, scrivo i dati</button>
+    <button class="big-btn sec2" data-a="pop-gia-si">Sì, sono sicuro</button></div></div>`;
   return '';
 }
 const verificheMancanti = () => verificheTipo().filter((_, i) => !S.checks[S.oTipo + '|' + i]);
@@ -1050,6 +1056,8 @@ function idFiscale(v) {
 function componiFattura(f) {
   if (!f) return '';
   const r = [];
+  // 27/11: cliente già fatturato in passato, i dati li ha l'ufficio (il backoffice mostra gli ultimi usati)
+  if (f.gia) return ['DATI GIÀ IN UFFICIO: cliente già fatturato'].concat(f.nome.trim() ? ['Nome: ' + f.nome.trim()] : []).join('\n');
   if (f.uff) r.push('DA COMPLETARE IN UFFICIO: il cliente non aveva i dati');
   if (f.nome.trim()) r.push('Nome: ' + f.nome.trim());
   if (!f.uff && f.id.trim()) r.push('P.IVA o C.F.: ' + f.id.trim().toUpperCase());
@@ -1059,6 +1067,7 @@ function componiFattura(f) {
   return r.join('\n');
 }
 function ftMancanti(f, testo) {
+  if (f && f.gia) return f.nome.trim() ? [] : ['nome del cliente'];
   if (!f || (!f.uff && !f.nome && !f.id && !f.ind && !f.sdi && !f.tel)) return String(testo || '').trim() ? [] : ['dati per la fattura'];
   const m = [];
   if (!f.nome.trim()) m.push(f.uff ? 'nome del cliente' : 'nome o ragione sociale');
@@ -1082,11 +1091,14 @@ function msgId(v) {
 function vDatiFattura(k, testo) {
   const f = S[k] || (S[k] = ftVuoto());
   // bozza delle versioni precedenti (testo libero): il testo va nel nome, da sistemare
-  if (testo && !f.nome && !f.id && !f.ind && !f.sdi && !f.tel && !f.uff && !testo.startsWith('Nome: ')) { f.nome = testo; }
+  if (testo && !f.nome && !f.id && !f.ind && !f.sdi && !f.tel && !f.uff && !f.gia && !testo.startsWith('Nome: ')) { f.nome = testo; }
   const campo = (c, label, extra = '') => `<div style="margin-top:10px"><div class="lbl" style="font-size:16px;margin-bottom:6px">${label}</div>
     <input class="inp" value="${esc(f[c])}" data-b="${k}.${c}" autocomplete="off" ${extra}></div>`;
   // il pulsante «non ha i dati» sta in fondo e in piccolo: prima si prova a chiederli (col codice Segafredo, se è comodo, lo si salta)
   const btnUff = `<button class="big-btn sec2" data-a="ft-uff" data-v="${k}" style="margin-top:12px;min-height:52px;font-size:18px">${f.uff ? 'Ha i dati: li scrivo' : 'Non ha i dati: li chiede l\'ufficio'}</button>`;
+  const btnGia = `<button class="big-btn sec2" data-a="ft-gia" data-v="${k}" style="margin-top:8px;min-height:52px;font-size:18px">${f.gia ? 'No, scrivo i dati' : 'Abbiamo già i suoi dati in ufficio'}</button>`;
+  if (f.gia) return `<div class="lbl">Dati per la fattura</div><div><div class="info">Cliente già fatturato in passato: l'ufficio usa i dati che ha già. Controlla solo che il nome sia giusto.</div>`
+    + campo('nome', 'Nome o ragione sociale') + btnGia + '</div>';
   if (f.uff) return `<div class="lbl">Dati per la fattura</div><div><div class="info">Il cliente non ha i dati: scrivi almeno il nome e il telefono, l'ufficio lo richiama.</div>`
     + campo('nome', 'Nome o ragione sociale') + campo('tel', 'Telefono del cliente', 'type="tel" inputmode="tel"') + btnUff + '</div>';
   return `<div class="lbl">Dati per la fattura</div><div>` + campo('nome', 'Nome o ragione sociale')
@@ -1094,7 +1106,7 @@ function vDatiFattura(k, testo) {
       <input class="inp mono" value="${esc(f.id)}" data-b="${k}.id" autocomplete="off"><div id="p-${k}Id">${msgId(f.id)}</div></div>`
     + campo('ind', 'Indirizzo <span>(via, numero, CAP, comune)</span>')
     + campo('sdi', 'Codice SDI o PEC <span>(se lo sa)</span>', 'autocapitalize="characters"')
-    + campo('tel', 'Telefono <span>(facoltativo, utile all\'ufficio)</span>', 'type="tel" inputmode="tel"') + btnUff + '</div>';
+    + campo('tel', 'Telefono <span>(facoltativo, utile all\'ufficio)</span>', 'type="tel" inputmode="tel"') + btnGia + btnUff + '</div>';
 }
 
 // Dati per la fattura: controllo leggero (non blocca). Scrivere "verifica in ufficio" sembra compilato ma non lo è:
@@ -1697,7 +1709,18 @@ const A = {
     const el = document.getElementById('q-ci'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('q', 'flash'); }
     setTimeout(() => { const i = document.getElementById('in-ci'); if (i) i.focus({ preventScroll: true }); }, 350);
   },
-  'ft-uff': k => { S[k].uff = !S[k].uff; aggiornaFattura(); set({}); },
+  'ft-uff': k => { S[k].uff = !S[k].uff; S[k].gia = false; aggiornaFattura(); set({}); },
+  'ft-gia': k => {
+    if (!S[k].gia) { UI.popup = 'gia'; UI.popK = k; render(); return; }   // prima di attivarlo chiede conferma
+    S[k].gia = false; aggiornaFattura(); set({});
+  },
+  'pop-gia-no': () => { UI.popup = ''; render(); },
+  'pop-gia-si': () => {
+    const k = UI.popK; UI.popup = '';
+    S[k].gia = true; S[k].uff = false;
+    if (S[k].gia && !S[k].nome) { const c = k === 'oft' ? S.oCliente : S.cliente; if (c && c.nome) S[k].nome = c.nome; }   // nome del locale come partenza
+    aggiornaFattura(); set({});
+  },
   'pop-ver-torno': () => { UI.popup = ''; render(); },
   'pop-ver-avanti': () => { UI.popup = ''; S.verificheNo = true; A.avanti(true); },
   'pop-ci-nonso': () => { UI.popup = ''; S.ciNonSo = true; A.avanti(UI.popForza); },
