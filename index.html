@@ -786,7 +786,7 @@ function vistaApp() {
       <div class="saved" id="saved-at">${S.savedAt ? 'Bozza salvata alle ' + S.savedAt : ''}</div></div>`;
   }
   h += `<div class="main" data-screen="${sc}">`;
-  const V = { inizio: vInizio, cliente: vCliente, apparecchi: vApparecchi, lavoro: vLavoro, chiusura: vChiusura, macchina: vMacchina, verifiche: vVerifiche, riepilogo: vRiepilogo, conferma: vConferma, furgone: vFurgone, cartucce: vCartucce };
+  const V = { inizio: vInizio, cliente: vCliente, apparecchi: vApparecchi, lavoro: vLavoro, chiusura: vChiusura, macchina: vMacchina, verifiche: vVerifiche, riepilogo: vRiepilogo, conferma: vConferma, furgone: vFurgone, cartucce: vCartucce, ricambi: vRicambi };
   h += (V[sc] || vInizio)(bad);
   h += `</div>`;
   if (idx >= 0) h += vFooter(sc, warn);
@@ -857,9 +857,62 @@ function vInizio() {
       <button class="choice blueprint" data-a="start" data-v="officina">${CORNERS}<b>${AUTH.tablet ? 'Nuova macchina' : 'Lavoro di officina'}</b><span>Una scheda per ogni macchina. Se non la finisci, la salvi e la riprende chiunque.</span></button>
     </div>
     ${AUTH.tablet ? '' : `<button class="big-btn sec2" data-a="furgone">Da rimettere sul furgone${D && D.furgone ? ` (${D.furgone})` : ''}</button>`}
+    <button class="big-btn sec2" data-a="ricambi">Cerca ricambio e prezzo</button>
     <button class="big-btn sec2" data-a="cartucce">Tabelle cartucce (durezza acqua)</button>
     ${AUTH.tablet ? `<button class="big-btn sec2" data-a="cambia-tecnico">Non sei ${esc(AUTH.tecnico)}? Cambia</button>` : ''}
   </div>`;
+}
+
+/* ---------- Cerca ricambio e prezzo (26/11): come «Cerca ricambio» del registro, prezzo al pubblico ---------- */
+function vRicambi() {
+  const R = UI.rr;
+  return `<div class="pad" style="padding-top:20px;gap:16px">
+    <div style="display:flex;align-items:center;gap:8px"><button class="ico-btn" data-a="ric-chiudi" aria-label="Indietro">${SVG.back}</button>
+      <div><div class="kicker">Listino fornitori</div><h2 class="big" style="margin:0">Cerca ricambio</h2></div></div>
+    <div class="search"><input class="inp" id="q-ric" value="${esc(R.q)}" placeholder="es. doccia e61 · pressost · 8F403" data-b="UI.rq" autocomplete="off">${SVG.search}</div>
+    <div class="hint" style="margin-top:-8px">Anche pezzi di parola o il codice, e il fornitore (es. «dvg doccia»). Prezzi al pubblico, IVA esclusa.</div>
+    <div id="p-ricF" style="margin-top:-6px">${pRicForn()}</div>
+    <div id="p-ric">${pRic()}</div></div>`;
+}
+// pulsanti dei fornitori: sempre visibili, con quanti pezzi trovati per ognuno dopo una ricerca
+function pRicForn() {
+  const R = UI.rr || {}, conta = {};
+  ((R.dati && R.dati.fornitori) || []).forEach(x => { if (x.n != null) conta[x.f] = x.n; });
+  const elenco = [...new Set((R.forni || []).concat(Object.keys(conta)))].filter(Boolean);
+  if (!elenco.length) return '';
+  const sel = R.forn || (R.dati && R.dati.scelto) || '';
+  const st = on => on ? 'background:var(--color-accent-800);color:#fff;border-color:var(--color-accent-800)' : '';
+  return `<div class="chips" style="margin:0"><button class="chip" data-a="ric-forn" data-v="" style="${st(!sel)}">Tutti</button>${elenco.map(f => `<button class="chip" data-a="ric-forn" data-v="${esc(f)}" style="${st(sel === f)}">${esc(f)}${f in conta ? ` (${conta[f]})` : ''}</button>`).join('')}</div>`;
+}
+function pRic() {
+  const R = UI.rr || {};
+  if (senzaRete() && !R.dati) return '<div class="info">Senza connessione la ricerca non funziona: il listino è nel registro.</div>';
+  if (R.err) return `<div class="warn">${esc(R.err)}</div>`;
+  if (!R.q || R.q.trim().length < 2) return '<div class="empty">Scrivi almeno 2 lettere.</div>';
+  if (!R.dati) return '<div class="center" style="min-height:120px;padding:0"><div class="spin"></div></div>';
+  const d = R.dati;
+  let h = d.scelto && !R.forn ? `<div class="hint" style="margin:0 0 8px">Cerco solo in <b>${esc(d.scelto)}</b> (l'hai scritto nella ricerca)</div>` : '';
+  if (!d.ris.length) return h + '<div class="empty">Nessun ricambio trovato. Prova con meno parole o un pezzo di parola.</div>';
+  const nl = d.ris.filter(x => !x.ab).length;
+  h += `<div class="hint" style="margin:0 0 8px">${d.tot} nel listino${d.tot > nl ? ` (mostro i primi ${nl}: aggiungi una parola per restringere)` : ''}</div>`;
+  h += '<div class="grid1" style="gap:8px">' + d.ris.map(x => `<div class="pezzo" style="align-items:flex-start;padding:10px 12px">
+      <div class="n">${x.ab ? `<span style="font-size:12px;font-weight:700;color:var(--color-accent-700)">NOME USATO DA NOI · </span>${esc(x.nome)}<br><small style="font-weight:400">${esc(x.desc)}</small>` : esc(x.desc)}
+        <br><small style="font-weight:400;color:var(--color-neutral-800)">${esc(x.forn)}${x.cod ? ' · cod. ' + esc(x.cod) : ''}${x.data ? ' · prezzo del ' + esc(x.data) : ''}</small></div>
+      <div style="font-family:var(--font-heading);font-size:24px;font-weight:600;white-space:nowrap">${x.prezzo == null ? '<span style="font-size:15px;color:#b3261e">senza prezzo</span>' : x.prezzo.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'}</div></div>`).join('') + '</div>';
+  return h;
+}
+let _ricT = null, _ricSeq = 0;
+function cercaRicambio(subito) {
+  const R = UI.rr; clearTimeout(_ricT);
+  const box = () => { const el = document.getElementById('p-ric'); if (el) el.innerHTML = pRic(); };
+  R.err = '';
+  if (!R.q || R.q.trim().length < 2) { R.dati = null; return box(); }
+  _ricT = setTimeout(() => {
+    const seq = ++_ricSeq; R.dati = null; box();
+    run('appCercaRicambio', AUTH.pin, R.q.trim(), R.forn || '')
+      .then(d => { if (seq !== _ricSeq) return; R.dati = d; box(); const f = document.getElementById('p-ricF'); if (f) f.innerHTML = pRicForn(); })
+      .catch(e => { if (seq !== _ricSeq) return; R.err = 'Ricerca non riuscita: ' + errMsg(e); box(); });
+  }, subito ? 0 : 450);
 }
 
 /* ---------- da rimettere sul furgone ---------- */
@@ -1486,6 +1539,14 @@ const A = {
   'carica-uno': i => caricato(Number(i), 1),
   'carica-tutti': i => caricato(Number(i), 0),
   cartucce: () => { UI.cart = null; S.screen = 'cartucce'; render(); },
+  ricambi: () => {
+    UI.rr = UI.rr || { q: '', forn: '', dati: null, forni: [] }; S.screen = 'ricambi'; render();
+    setTimeout(() => { const i = document.getElementById('q-ric'); if (i) i.focus(); }, 80);
+    if (!UI.rr.forni.length && !senzaRete()) run('appCercaRicambio', AUTH.pin, '', '')   // solo l'elenco dei fornitori
+      .then(d => { UI.rr.forni = (d.fornitori || []).map(x => x.f); const el = document.getElementById('p-ricF'); if (el) el.innerHTML = pRicForn(); }).catch(() => { });
+  },
+  'ric-chiudi': () => { S.screen = 'inizio'; S.drafts = elencoBozze(); render(); },
+  'ric-forn': v => { UI.rr.forn = v || ''; const el = document.getElementById('p-ricF'); if (el) el.innerHTML = pRicForn(); cercaRicambio(true); },
   'cart-chiudi': () => { S.screen = 'inizio'; S.drafts = elencoBozze(); render(); },
   'cart-marca': v => { const c = UI.cart; if (c.marca !== v) c.mod = null; c.marca = v; store.set('rap_cartucce', { marca: c.marca, ml: c.ml }); render(); },
   'cart-mod': v => { UI.cart.mod = Number(v); render(); },
@@ -1691,6 +1752,7 @@ document.addEventListener('input', e => {
   let v = el.value;
   if (el.dataset.f === 'cifre') { v = v.replace(/\D/g, '').slice(0, 6); if (v !== el.value) el.value = v; }
   if (el.dataset.f === 'importo') { v = v.replace(/[^\d,.]/g, ''); if (v !== el.value) el.value = v; }
+  if (b === 'UI.rq') { UI.rr.q = v; cercaRicambio(); return; }
   if (b.startsWith('UI.')) { UI[b.slice(3)] = v; return; }
   setPath(b, v);
   if (/^o?ft\./.test(b)) aggiornaFattura();

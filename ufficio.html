@@ -141,6 +141,11 @@ window.onerror = (m, src, riga) => { const a = document.getElementById('app'); i
 document.getElementById('app').innerHTML = '<p>Collegamento al registro…</p>';
 let K = '';            // chiave personale dell'ufficio (dal link ?u=) + ':' + codice personale
 let CHIAVE = '';       // solo la chiave del link
+// PC dell'officina (27/11): link condiviso. Si sceglie il nome e si digita ogni volta il proprio codice (mai ricordato).
+let PC = null;         // elenco dei nomi se il link è quello del PC, altrimenti null
+let NOME = '';
+let ultimaAttivita = Date.now();
+const PC_MINUTI = 20;  // sul PC, dopo 20 minuti senza toccare niente torna alla scelta del nome
 const K_COD = () => 'uffcodice_' + CHIAVE.slice(0, 12);
 // Il codice resta ricordato su questo computer al massimo 30 giorni, poi lo richiede.
 const COD_GIORNI = 30;
@@ -211,6 +216,7 @@ async function caricaMese(m) {
   }
   catch (e) {
     const m = errMsg(e);
+    if (m.indexOf('SERVE_NOME:') === 0) { PC = m.slice(11).split('|').filter(Boolean); D = null; clearTimeout(lento); $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; return vistaChi(); }
     if (m === 'SERVE_CODICE' || m === 'CODICE_ERRATO') { salvaCod(''); D = null; clearTimeout(lento); $('busy').classList.remove('on'); $('busy').textContent = 'Salvo…'; return vistaCodice(m === 'CODICE_ERRATO'); }
     toast(m, 'err'); if (!D) $('app').innerHTML = `<div class="card rosso"><h2>Non riesco a leggere il registro</h2><p>${esc(m)}</p><p class="sub">Manda questo messaggio a chi gestisce l'app.</p></div>`;
   }
@@ -588,7 +594,7 @@ function vicine(nome) {
 }
 
 /* ================= CERCA E CORREGGI UN RAPPORTINO ================= */
-const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : on === 'crusc' ? 'Cruscotto' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)} <button class="ricarica" data-a="ricarica" aria-label="Aggiorna l'app" title="Aggiorna l'app">↻</button></span></header>
+const schede = on => `<header><h1>${on === 'mese' ? 'Fine mese' : on === 'crusc' ? 'Cruscotto' : 'Rapportini'}</h1><span class="chi">Ciao ${esc(D.chi)}${PC ? ' <button class="btn sec piccolo" data-a="esci">Cambia utente</button>' : ''} <button class="ricarica" data-a="ricarica" aria-label="Aggiorna l'app" title="Aggiorna l'app">↻</button></span></header>
   <div class="tabs"><button class="${on === 'mese' ? 'on' : ''}" data-a="vaiMese">Fine mese</button><button class="${on === 'cerca' ? 'on' : ''}" data-a="vaiCerca">Cerca rapportino</button>${D.permessi === 'fatture' ? '' : `<button class="${on === 'crusc' ? 'on' : ''}" data-a="vaiCrusc">Cruscotto</button>`}</div>`;
 /* ================= CRUSCOTTO ================= */
 // Si carica solo aprendo la scheda (una lettura del registro), poi tutto si calcola qui: cambiare mese o filtro è immediato.
@@ -784,7 +790,7 @@ document.addEventListener('click', async ev => {
   if (!b || V.busy) return;
   const a = b.dataset.a, k = b.dataset.k, g = k ? gruppoDa(k) : null;
   if (a === 'mese') return caricaMese(spostaMese(D.mese, Number(b.dataset.d)));
-  if (a === 'esci') { salvaCod(''); K = ''; D = null; return vistaCodice(false); }
+  if (a === 'esci') { salvaCod(''); K = ''; D = null; if (PC) { NOME = ''; return vistaChi(); } return vistaCodice(false); }
   if (a === 'vaiMese') { V.vista = 'mese'; if (C.sporco) { C.sporco = false; return caricaMese(D.mese); } return render(); }
   if (a === 'vaiCerca') { V.vista = 'cerca'; render(); if (!C.ris) cerca(); return; }
   if (a === 'ricarica') { document.body.style.opacity = '.5'; try { location.reload(); } catch (e) { location.href = location.href; } return; }
@@ -1008,13 +1014,23 @@ function render() {
 }
 
 // codice personale: si chiede la prima volta su ogni computer, poi resta ricordato (finché non premi "Esci")
+// PC dell'officina: prima si sceglie chi sta usando il backoffice
+function vistaChi() {
+  $('app').innerHTML = `<div class="card" style="max-width:460px;margin:40px auto;border-left-color:var(--accent)"><h2>Chi sta usando il backoffice?</h2>
+    <p class="sub">PC dell'officina: dopo il nome serve il tuo codice personale. Qui non viene ricordato.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">${(PC || []).map(n => `<button class="btn" data-nome="${esc(n)}" style="font-size:20px;min-height:56px">${esc(n)}</button>`).join('')}</div></div>`;
+  document.querySelectorAll('[data-nome]').forEach(b => { b.onclick = () => { NOME = b.dataset.nome; vistaCodice(false); }; });
+}
 function vistaCodice(sbagliato) {
-  $('app').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto;border-left-color:var(--accent)"><h2>Codice personale</h2>
-    <p class="sub">La prima volta su questo computer serve il tuo codice personale (4-6 cifre). Poi non lo chiede più.</p>
+  $('app').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto;border-left-color:var(--accent)"><h2>${PC ? 'Codice di ' + esc(NOME) : 'Codice personale'}</h2>
+    <p class="sub">${PC ? 'Il tuo codice personale (4-6 cifre). <button class="link" id="altroNome">Non sei ' + esc(NOME) + '?</button>' : 'La prima volta su questo computer serve il tuo codice personale (4-6 cifre). Poi non lo chiede più.'}</p>
     ${sbagliato ? '<div class="avviso" style="background:var(--rosso-soft)">Codice sbagliato. Riprova.</div>' : ''}
     <div class="euro" style="margin-top:10px"><input type="password" inputmode="numeric" id="inCod" maxlength="6" autocomplete="off" style="letter-spacing:.3em">
     <button class="btn" id="btnCod">Entra</button></div></div>`;
-  const entra = () => { const c = $('inCod').value.trim(); if (!/^\d{4,6}$/.test(c)) return toast('Il codice ha 4-6 cifre', 'err'); salvaCod(c); K = CHIAVE + ':' + c; caricaMese(''); };
+  const entra = () => { const c = $('inCod').value.trim(); if (!/^\d{4,6}$/.test(c)) return toast('Il codice ha 4-6 cifre', 'err');
+    if (PC) K = CHIAVE + '|' + NOME + ':' + c; else { salvaCod(c); K = CHIAVE + ':' + c; }
+    ultimaAttivita = Date.now(); caricaMese(''); };
+  if ($('altroNome')) $('altroNome').onclick = () => { NOME = ''; vistaChi(); };
   $('btnCod').onclick = entra;
   $('inCod').onkeydown = ev => { if (ev.key === 'Enter') entra(); };
   $('inCod').focus();
@@ -1030,13 +1046,24 @@ function entraConChiave(u) {
     CHIAVE = u;
     if (!CHIAVE) { $('app').innerHTML = '<p>Link non valido: manca la chiave dopo ?u=</p>'; return; }
     const c = leggiCod();
-    if (!c) return vistaCodice(false);
+    if (!c) {   // nessun codice ricordato: chiedo al registro se è un link personale o quello del PC dell'officina
+      $('app').innerHTML = '<p>Collegamento al registro…</p>';
+      return run('uffChiSono', CHIAVE + ':').then(() => vistaCodice(false)).catch(e => {
+        const m = errMsg(e);
+        if (m.indexOf('SERVE_NOME:') === 0) { PC = m.slice(11).split('|').filter(Boolean); return vistaChi(); }
+        if (m === 'SERVE_CODICE' || m === 'CODICE_ERRATO') return vistaCodice(false);
+        $('app').innerHTML = `<p style="color:#c0392b">${esc(m)}</p>`;
+      });
+    }
     K = CHIAVE + ':' + c;
     $('app').innerHTML = '<p>Leggo il registro…</p>';
     caricaMese('');
   }
 }
 partenza();
+// PC dell'officina: dopo PC_MINUTI senza attività si torna alla scelta del nome (nessuno resta collegato al posto di un altro)
+['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { ultimaAttivita = Date.now(); }, true));
+setInterval(() => { if (PC && D && !V.busy && Date.now() - ultimaAttivita > PC_MINUTI * 60000) { K = ''; D = null; NOME = ''; vistaChi(); } }, 60000);
 </script>
 </body>
 </html>
